@@ -42,6 +42,10 @@ Run `typecheck` and `test` before saying a task is done.
   `worker.format: 'es'`. PWA `globPatterns` must include `**/*.wasm`.
 - `HashRouter`, not `BrowserRouter` (GitHub Pages has no SPA fallback).
 
+## Planned v2 (not started)
+`MIGRATION.md` — self-hosted full-stack version (Node API + Postgres on the owner's laptop,
+Tailscale Funnel, invite-only accounts). Don't start it until asked.
+
 ## Out of scope for v1
 Social features, accounts, sync, templates/routines, push notifications, localization,
 non-kg units. Don't build them; note ideas in `IDEAS.md` instead.

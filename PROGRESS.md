@@ -79,6 +79,9 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Settings → Default rest timer, applied to every exercise not customised in a workout
       (migration 5); workout rest menu gains "Use default"
 
+## Planned, not started
+- Self-hosted full-stack, multi-user version — see `MIGRATION.md` (decisions recorded 2026-10-22).
+
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
 - Rest-timer beep on iOS (Web Audio is muted while the ringer switch is on silent).
