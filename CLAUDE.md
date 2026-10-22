@@ -9,8 +9,8 @@ is `SPEC.md` — read the relevant section before every task.** Current status l
 ## Working agreement
 - Work **one phase at a time** (SPEC §9). Don't start the next phase until I confirm the current
   one works on my iPhone.
-- Before writing code for a task: give a short plan (files to touch, approach, open questions)
-  and wait for my OK. I review; you implement.
+- No plan approval needed: implement directly and track progress in `PROGRESS.md` (tick tasks,
+  add a dated log line per phase/milestone).
 - Don't add dependencies beyond SPEC §2 without asking first.
 - Small, focused commits with clear messages. One concern per commit.
 - If the spec is ambiguous or seems wrong, say so and propose a fix — don't silently improvise.

@@ -173,6 +173,12 @@ CREATE TABLE skip (
            ('sick','injury','tired','no_time','travel','chose_not_to','other')),
   note    TEXT
 );
+
+-- Small key/value store (e.g. launch_count, first_launch_at for the Phase 0 persistence check).
+CREATE TABLE meta (
+  key    TEXT PRIMARY KEY,
+  value  TEXT NOT NULL
+);
 ```
 
 ### Why `plan_version`

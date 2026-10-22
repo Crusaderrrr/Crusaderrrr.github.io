@@ -12,17 +12,20 @@ Legend: ⬜ not started · 🟡 in progress · ✅ verified on iPhone
 - 2026-10-22 — Set types now: normal / warmup / drop / failure (`set_type`).
 - 2026-10-22 — Hosted as user site `Crusaderrrr.github.io` → base `/`.
 
-## Phase 0 — Skeleton + persistence gate ⬜
+## Phase 0 — Skeleton + persistence gate 🟡 (built, awaiting iPhone check)
 - [x] GitHub repo connected (`Crusaderrrr/Crusaderrrr.github.io`)
-- [ ] Repo Settings → Pages → Source = GitHub Actions
-- [ ] Vite + React + TS strict + Tailwind, dark default
-- [ ] HashRouter, bottom tab bar (Today · History · Calendar · Exercises · Settings), empty screens
-- [ ] DB worker (`opfs-sahpool`, pool `ttp`) + RPC client + migration 1 (schema + seed)
-- [ ] "App is open elsewhere" error screen
-- [ ] `domain/dates.ts` + tests
-- [ ] PWA config (manifest, icons, `**/*.wasm` precache, iOS meta tags, fallback allowlist)
-- [ ] GitHub Actions: test → build → deploy
-- [ ] Verify: installed from Home Screen, test row survives full close, opens in airplane mode
+- [ ] Repo Settings → Pages → Source = GitHub Actions (owner)
+- [x] Vite + React + TS strict + Tailwind, dark default
+- [x] HashRouter, bottom tab bar (Today · History · Calendar · Exercises · Settings), empty screens
+- [x] DB worker (`opfs-sahpool`, pool `ttp`) + RPC client + migration 1 (schema + seed + `meta`)
+- [x] "App is open elsewhere" error screen
+- [x] `domain/dates.ts` + tests
+- [x] PWA config (manifest, icons, `**/*.wasm` precache, iOS meta tags, fallback allowlist)
+- [x] GitHub Actions: typecheck → test → build → deploy
+- [x] Desktop Chrome check: DB opens, 52 exercises seeded, launch count persists across reload,
+      works offline, second tab shows the error screen
+- [ ] iPhone check: install from Home Screen, Settings → "App launches" grows after a full
+      close (swipe away), app opens in airplane mode
 
 ## Phase 1 — Exercise library ⬜
 - [ ] List + search + muscle-group filter
@@ -62,3 +65,5 @@ Legend: ⬜ not started · 🟡 in progress · ✅ verified on iPhone
 ## Log
 - 2026-10-22 — Spec reviewed; renamed to Trust The Process / `ttp`; schema + gotcha fixes.
 - 2026-10-22 — Decisions above folded into SPEC; repo connected.
+- 2026-10-22 — Phase 0 implemented (Vite 8, React 19, react-router 8, TS 6.0 — TS 7 not yet
+  supported by typescript-eslint). Verified in desktop Chrome; waiting on iPhone check.
