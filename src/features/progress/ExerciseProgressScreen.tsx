@@ -7,7 +7,15 @@ import { personalRecords, sessionStats, type SessionStats } from '../../domain/p
 import { formatWeight, setLabels } from '../../domain/sets';
 import { useDbQuery } from '../../hooks/useDbQuery';
 import MuscleIcon from '../../components/MuscleIcon';
-import { getExercise, label, removeExercise, setFavorite, unarchiveExercise } from '../../repositories/exercises';
+import {
+  getExercise,
+  label,
+  removeExercise,
+  setExerciseImage,
+  setFavorite,
+  unarchiveExercise,
+} from '../../repositories/exercises';
+import { photoToDataUrl } from '../exercises/photo';
 import { sessionsByExercise } from '../../repositories/progress';
 import { formatDate } from '../history/HistoryScreen';
 
@@ -50,6 +58,9 @@ export default function ExerciseProgressScreen() {
       <button className="self-start text-green-500" onClick={() => navigate(-1)}>
         ‹ Back
       </button>
+      {exercise.image && (
+        <img src={exercise.image} alt={exercise.name} className="aspect-[3/2] w-full rounded-2xl bg-white object-cover" />
+      )}
       <div className="flex items-center gap-3">
         <MuscleIcon group={exercise.muscleGroup} size={56} />
         <div className="min-w-0 flex-1">
@@ -117,6 +128,27 @@ export default function ExerciseProgressScreen() {
           })}
         </section>
       )}
+
+      <div className="flex gap-2">
+        <label className={`${btn.secondary} flex-1 text-center`}>
+          {exercise.image ? 'Change photo' : 'Add photo'}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) await setExerciseImage(id, await photoToDataUrl(file));
+              e.target.value = '';
+            }}
+          />
+        </label>
+        {exercise.image && (
+          <button className={`${btn.secondary} flex-1`} onClick={() => setExerciseImage(id, null)}>
+            Remove photo
+          </button>
+        )}
+      </div>
 
       {exercise.archived ? (
         <button className={btn.secondary} onClick={() => unarchiveExercise(id)}>

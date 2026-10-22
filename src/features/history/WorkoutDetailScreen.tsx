@@ -4,7 +4,7 @@ import { formatWeight, setLabels } from '../../domain/sets';
 import { formatDuration, summarize } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
 import { deleteWorkout, getWorkout } from '../../repositories/workouts';
-import MuscleIcon from '../../components/MuscleIcon';
+import ExerciseThumb from '../../components/ExerciseThumb';
 import { Stat } from '../workout/FinishSheet';
 import { SET_TYPE_COLOR } from '../workout/SetRow';
 import WorkoutEditor from '../workout/WorkoutEditor';
@@ -45,7 +45,7 @@ export function WorkoutDetailScreen() {
         return (
           <section key={we.id} className="rounded-2xl bg-neutral-900 p-3">
             <Link to={`/exercises/${we.exerciseId}`} className="flex items-center gap-3 font-semibold text-green-500">
-              <MuscleIcon group={we.muscleGroup} />
+              <ExerciseThumb image={we.image} muscleGroup={we.muscleGroup} />
               {we.name}
             </Link>
             <ul className="mt-2 space-y-1">

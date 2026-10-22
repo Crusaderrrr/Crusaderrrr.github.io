@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import Sheet, { btn } from '../../components/Sheet';
-import MuscleIcon from '../../components/MuscleIcon';
+import ExerciseThumb from '../../components/ExerciseThumb';
 import { completeValues, SET_TYPE_NAMES, SET_TYPES, setLabels, type SetType } from '../../domain/sets';
 import { formatClock } from '../../domain/workout';
 import { setRestSeconds } from '../../repositories/exercises';
@@ -59,7 +59,7 @@ export default function ExerciseCard({
   return (
     <section className="rounded-2xl bg-neutral-900 p-3">
       <div className="flex items-center gap-3">
-        <MuscleIcon group={we.muscleGroup} />
+        <ExerciseThumb image={we.image} muscleGroup={we.muscleGroup} />
         <Link to={`/exercises/${we.exerciseId}`} className="min-w-0 flex-1 truncate font-semibold text-green-500">
           {we.name}
         </Link>

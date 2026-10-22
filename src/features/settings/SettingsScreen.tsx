@@ -82,6 +82,9 @@ export default function SettingsScreen() {
             <dd>{new Date(__BUILD_TIME__).toLocaleString('en-GB')}</dd>
           </dl>
         )}
+        <p className="mt-3 text-xs text-neutral-500">
+          Exercise photos: free-exercise-db (public domain).
+        </p>
       </section>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import MuscleIcon from '../../components/MuscleIcon';
+import ExerciseThumb from '../../components/ExerciseThumb';
 import { btn, input } from '../../components/Sheet';
 import { useDbQuery } from '../../hooks/useDbQuery';
 import {
@@ -37,7 +37,7 @@ export default function ExerciseList({
   const row = (e: Exercise) => (
     <li key={e.id} className="flex items-center gap-3">
       <button className="flex min-w-0 flex-1 items-center gap-3 py-2.5 text-left" onClick={() => onPick(e)}>
-        <MuscleIcon group={e.muscleGroup} />
+        <ExerciseThumb image={e.image} muscleGroup={e.muscleGroup} />
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium">{e.name}</span>
           <span className="text-sm text-neutral-400">

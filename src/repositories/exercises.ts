@@ -26,10 +26,12 @@ export type Exercise = {
   archived: number;
   restSeconds: number;
   favorite: number;
+  /** Bundled photo path or JPEG data URL; null → muscle-group icon. */
+  image: string | null;
 };
 
 const COLS = `id, name, muscle_group AS muscleGroup, equipment, is_custom AS isCustom, archived,
-              rest_seconds AS restSeconds, favorite`;
+              rest_seconds AS restSeconds, favorite, image`;
 
 export function listExercises(archived = false): Promise<Exercise[]> {
   return query<Exercise>(`SELECT ${COLS} FROM exercise WHERE archived = ? ORDER BY name`, [archived ? 1 : 0]);
@@ -44,13 +46,14 @@ export async function createExercise(e: {
   name: string;
   muscleGroup: MuscleGroup;
   equipment: Equipment;
+  image: string | null;
 }): Promise<number> {
   const name = e.name.trim();
   const [dup] = await query('SELECT 1 FROM exercise WHERE name = ?', [name]);
   if (dup) throw new Error(`"${name}" already exists (it may be archived).`);
   const [row] = await query<{ id: number }>(
-    `INSERT INTO exercise (name, muscle_group, equipment, is_custom) VALUES (?, ?, ?, 1) RETURNING id`,
-    [name, e.muscleGroup, e.equipment],
+    `INSERT INTO exercise (name, muscle_group, equipment, is_custom, image) VALUES (?, ?, ?, 1, ?) RETURNING id`,
+    [name, e.muscleGroup, e.equipment, e.image],
   );
   return row!.id;
 }
@@ -69,6 +72,10 @@ export async function removeExercise(id: number): Promise<'deleted' | 'archived'
 
 export function unarchiveExercise(id: number) {
   return query('UPDATE exercise SET archived = 0 WHERE id = ?', [id]);
+}
+
+export function setExerciseImage(id: number, image: string | null) {
+  return query('UPDATE exercise SET image = ? WHERE id = ?', [image, id]);
 }
 
 export function setFavorite(id: number, favorite: boolean) {

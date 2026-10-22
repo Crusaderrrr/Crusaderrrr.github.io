@@ -1,3 +1,4 @@
+import { seedImages } from './exerciseImages';
 import { seedSql } from './seed';
 
 // Ordered list; running migrations[i] brings the DB to PRAGMA user_version = i + 1.
@@ -75,4 +76,10 @@ export const migrations: string[] = [
   `,
   // 2: favourites (Exercises tab section)
   `ALTER TABLE exercise ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0;`,
+  // 3: exercise picture — a bundled photo path for seed exercises, or a JPEG data URL for
+  // a user's own photo (kept in the DB so backups include it).
+  `ALTER TABLE exercise ADD COLUMN image TEXT;
+  ${seedImages
+    .map(([name, slug]) => `UPDATE exercise SET image = '/exercises/${slug}.jpg' WHERE name = '${name}' AND is_custom = 0;`)
+    .join('\n  ')}`,
 ];

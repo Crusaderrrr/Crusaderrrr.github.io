@@ -28,6 +28,7 @@ export type WorkoutExercise = {
   exerciseId: number;
   name: string;
   muscleGroup: MuscleGroup;
+  image: string | null;
   restSeconds: number;
   position: number;
   sets: WorkoutSet[];
@@ -50,7 +51,7 @@ export async function getWorkout(id: number): Promise<WorkoutDetail | null> {
   if (!w) return null;
 
   const exercises = await query<Omit<WorkoutExercise, 'sets' | 'previous'>>(
-    `SELECT we.id, we.exercise_id AS exerciseId, e.name, e.muscle_group AS muscleGroup,
+    `SELECT we.id, we.exercise_id AS exerciseId, e.name, e.muscle_group AS muscleGroup, e.image,
             e.rest_seconds AS restSeconds, we.position
      FROM workout_exercise we JOIN exercise e ON e.id = we.exercise_id
      WHERE we.workout_id = ? ORDER BY we.position, we.id`,
