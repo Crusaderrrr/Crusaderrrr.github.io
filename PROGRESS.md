@@ -67,6 +67,13 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Hevy-style illustrations need a paid license — not used (owner chose free photos)
 - [x] DB install retries; stress-tested close→reopen cycles and tab takeover without data loss
 
+## Feedback round 3 (2026-10-22) ✅
+- [x] Pages no longer rubber-band off-screen on iOS (document pinned; only content scrolls)
+- [x] Grip selector (wide / normal / narrow / parallel wide / parallel normal) on grip exercises,
+      remembered per exercise, matched in Previous, shown in History, filterable in Progress
+- [x] UI redesign: Material Symbols (filled) icons everywhere, cards, page headers, grouped
+      Settings rows, Today week strip + last workout, floating rest bar, area chart with metric tabs
+
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
 - Rest-timer beep on iOS (Web Audio is muted while the ringer switch is on silent).

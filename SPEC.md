@@ -119,6 +119,11 @@ CREATE TABLE exercise (
   favorite      INTEGER NOT NULL DEFAULT 0,  -- migration 2; ★ / Favourites section
   image         TEXT                         -- migration 3; '/exercises/<slug>.jpg' (bundled) or JPEG data URL (own photo)
 );
+-- Migration 4: exercise.has_grip (grip selector on: Lat Pulldown, Seated Cable Row, T-Bar Row,
+-- Pull-Up; toggle per exercise) and workout_exercise.grip
+-- ('wide','normal','narrow','parallel_wide','parallel_normal'). New grip exercises default to
+-- the grip used last time; "Previous" matches the same grip (falls back to grip-less history);
+-- History shows the grip and Progress can filter by it.
 -- Seed exercises get public-domain photos from free-exercise-db, bundled in public/exercises/
 -- (precached, so they work offline). Users can set their own photo (resized to 480px, stored in
 -- the DB so backups include it). No image → muscle-group icon (inline SVG).
