@@ -71,6 +71,7 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Pages no longer rubber-band off-screen on iOS (document pinned; only content scrolls)
 - [x] Grip selector (wide / normal / narrow / parallel wide / parallel normal) on grip exercises,
       remembered per exercise, matched in Previous, shown in History, filterable in Progress
+- [x] Bottom sheets portal to <body> so the tab bar can't cover them on iOS
 - [x] UI redesign: Material Symbols (filled) icons everywhere, cards, page headers, grouped
       Settings rows, Today week strip + last workout, floating rest bar, area chart with metric tabs
 

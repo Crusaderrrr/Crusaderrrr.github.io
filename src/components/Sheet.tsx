@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import Icon from './Icon';
 
 /** Bottom sheet over a dimmed backdrop; tap outside to close. */
@@ -13,7 +14,9 @@ export default function Sheet({
   children: ReactNode;
   full?: boolean;
 }) {
-  return (
+  // Portal to <body>: inside a scroll container iOS confines z-index to that container, so
+  // the tab bar (a sibling of the scroll area) would paint over the sheet.
+  return createPortal(
     <div className="fixed inset-0 z-40 flex flex-col justify-end bg-black/70 backdrop-blur-[2px]" onClick={onClose}>
       <div
         className={`flex flex-col rounded-t-3xl bg-neutral-900 pb-[max(1rem,env(safe-area-inset-bottom))] ring-1 ring-white/[0.06] ${
@@ -34,6 +37,7 @@ export default function Sheet({
         </div>
         <div className="scroll-area flex min-h-0 flex-1 flex-col px-4 pt-1">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -28,7 +28,6 @@ body {
 .scroll-area {
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
 }
 
 /* Hide scrollbars on horizontal chip rows. */
