@@ -7,8 +7,8 @@ is `SPEC.md` — read the relevant section before every task.** Current status l
 `PROGRESS.md` — update it when a task or phase changes state.
 
 ## Working agreement
-- Work **one phase at a time** (SPEC §9). Don't start the next phase until I confirm the current
-  one works on my iPhone.
+- Phases (SPEC §9) are built in order and pushed as each is finished; I test on the iPhone and
+  send corrections as we go (no need to wait for my confirmation between phases).
 - No plan approval needed: implement directly and track progress in `PROGRESS.md` (tick tasks,
   add a dated log line per phase/milestone).
 - Don't add dependencies beyond SPEC §2 without asking first.

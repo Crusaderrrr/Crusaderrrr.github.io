@@ -1,9 +1,7 @@
 # Progress — Trust The Process (TTP)
 
-Phases from SPEC §9. A phase is ✅ only after it's verified on the iPhone (installed icon).
+Phases from SPEC §9. ✅ = built and verified on desktop (mobile viewport); 📱 = confirmed on iPhone.
 Live URL: https://crusaderrrr.github.io/
-
-Legend: ⬜ not started · 🟡 in progress · ✅ verified on iPhone
 
 ## Decisions
 - 2026-10-22 — Hevy-style logging: per-set ✓ completion, Previous column, rest timer, live duration.
@@ -11,59 +9,57 @@ Legend: ⬜ not started · 🟡 in progress · ✅ verified on iPhone
 - 2026-10-22 — History tab in v1.
 - 2026-10-22 — Set types now: normal / warmup / drop / failure (`set_type`).
 - 2026-10-22 — Hosted as user site `Crusaderrrr.github.io` → base `/`.
+- 2026-10-22 — Build all phases continuously; owner tests on iPhone and sends corrections.
 
-## Phase 0 — Skeleton + persistence gate 🟡 (built, awaiting iPhone check)
-- [x] GitHub repo connected (`Crusaderrrr/Crusaderrrr.github.io`)
-- [x] Repo Settings → Pages → Source = GitHub Actions; custom domain removed
-- [x] Vite + React + TS strict + Tailwind, dark default
-- [x] HashRouter, bottom tab bar (Today · History · Calendar · Exercises · Settings), empty screens
-- [x] DB worker (`opfs-sahpool`, pool `ttp`) + RPC client + migration 1 (schema + seed + `meta`)
-- [x] "App is open elsewhere" error screen
-- [x] `domain/dates.ts` + tests
-- [x] PWA config (manifest, icons, `**/*.wasm` precache, iOS meta tags, fallback allowlist)
-- [x] GitHub Actions: typecheck → test → build → deploy
-- [x] Desktop Chrome check: DB opens, 52 exercises seeded, launch count persists across reload,
-      works offline, second tab shows the error screen
-- [ ] iPhone check: install from Home Screen, Settings → "App launches" grows after a full
-      close (swipe away), app opens in airplane mode
+## Phase 0 — Skeleton + persistence gate ✅ 📱
+- [x] Repo, Pages via GitHub Actions, Vite/React/TS/Tailwind, HashRouter, tab bar
+- [x] DB worker (`opfs-sahpool`, pool `ttp`) + RPC + migration 1, "open elsewhere" screen
+- [x] `domain/dates.ts` + tests, PWA config, deploy workflow
+- [x] iPhone: installed, launch counter persists
 
-## Phase 1 — Exercise library ⬜
-- [ ] List + search + muscle-group filter
-- [ ] Add custom exercise
-- [ ] Archive (history) / hard-delete (custom, no history)
+## Phase 1 — Exercise library ✅
+- [x] List + search + muscle-group filter
+- [x] Add custom exercise (also from the workout picker)
+- [x] Archive (history) / hard-delete (custom, no history); archived list + unarchive
 
-## Phase 2 — Backup ⬜
-- [ ] Export (share sheet / download)
-- [ ] Import with validation + migrate-forward
-- [ ] Last-backup date + 14-day nudge; storage status, app version
+## Phase 2 — Backup ✅
+- [x] Export (share sheet on iOS / download elsewhere) as `ttp-YYYY-MM-DD.sqlite3`
+- [x] Import with header + `user_version` validation, migrate-forward, reload
+- [x] Last-backup date + 14-day nudge (Settings and Today); storage status, build time
 
-## Phase 3 — Workout logging ⬜
-- [ ] `domain/sets.ts` + tests (labels, Previous matching, completion)
-- [ ] Start / continue / discard; mini-bar while in progress
-- [ ] Exercise picker; add/remove/reorder/replace exercises
-- [ ] Set table: SET · PREVIOUS · KG · REPS · ✓, set types, swipe-delete, add set
-- [ ] Rest timer (per-exercise, persisted `rest_ends_at`, ±15 s, skip)
-- [ ] Live duration, volume, set count header
-- [ ] Finish flow (incomplete-sets prompt, save sheet with summary)
+## Phase 3 — Workout logging ✅
+- [x] `domain/sets.ts` + `domain/workout.ts` + tests
+- [x] Start / continue / discard; mini-bar while in progress; minimize
+- [x] Multi-select exercise picker; remove / move / replace exercises
+- [x] Set table: SET · PREVIOUS · KG · REPS · ✓, set types, swipe/menu delete, add set (pre-fill)
+- [x] Rest timer (per-exercise setting, persisted `rest_ends_at`, ±15 s, skip, beep + flash)
+- [x] Live duration, volume, set count header
+- [x] Finish flow (incomplete-sets prompt, save sheet with summary + PR count)
 
-## Phase 4 — History + edit/delete ⬜
-- [ ] History list (cards) + detail
-- [ ] Edit finished workout (incl. date / start / duration)
-- [ ] Delete workout
+## Phase 4 — History + edit/delete ✅
+- [x] History cards (duration, volume, PRs, exercises) + detail
+- [x] Edit finished workout (title, date, start time, minutes, notes, sets)
+- [x] Delete workout
 
-## Phase 5 — Plan + calendar + skips ⬜
-- [ ] `plan_version` + Plan screen
-- [ ] `domain/calendar.ts` + tests
-- [ ] Month grid with statuses, day sheet, skip with reason, log past workout
-- [ ] Missed-days banner on Today; month summary
+## Phase 5 — Plan + calendar + skips ✅
+- [x] `plan_version` + Plan screen
+- [x] `domain/calendar.ts` + tests
+- [x] Month grid (arrows + swipe), day sheet, skip with reason, log past workout
+- [x] Missed-days banner on Today (last 14 days); month summary + reasons
 
-## Phase 6 — Progress ⬜
-- [ ] `domain/progress.ts` + tests
-- [ ] Charts (top weight, e1RM, volume) with range selector
-- [ ] PR cards, session history
+## Phase 6 — Progress ✅
+- [x] `domain/progress.ts` + tests
+- [x] Charts (top weight, e1RM, volume) with 1M / 3M / 1Y / All
+- [x] PR cards, session history
+
+## Not verified yet
+- iPhone check of Phases 1–6 (owner).
+- Rest-timer beep on iOS (Web Audio is muted while the ringer switch is on silent).
+- Missed-day banner end-to-end (needs a plan older than the missed day; logic is unit tested).
 
 ## Log
 - 2026-10-22 — Spec reviewed; renamed to Trust The Process / `ttp`; schema + gotcha fixes.
 - 2026-10-22 — Decisions above folded into SPEC; repo connected.
-- 2026-10-22 — Phase 0 implemented (Vite 8, React 19, react-router 8, TS 6.0 — TS 7 not yet
-  supported by typescript-eslint). Verified in desktop Chrome; waiting on iPhone check.
+- 2026-10-22 — Phase 0 implemented and confirmed on iPhone.
+- 2026-10-22 — Phases 1–6 implemented. E2E in Chrome (390×844): logging, reload mid-workout,
+  finish flow, PRs, history edit, calendar/plan/skip, charts, export → delete → import restore.

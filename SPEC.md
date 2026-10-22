@@ -242,7 +242,9 @@ tapping it reopens the workout.
 1. **Today**
    - Shows today's status (planned / rest / done / skipped).
    - Primary button: "Start workout" (or "Continue workout" if one is in progress).
-   - If any past planned days are `missed`, show a banner: "2 missed days — add a reason".
+   - If any past planned days in the last 14 days are `missed`, show a banner: "2 missed days —
+     add a reason" (older ones only show on the Calendar, so the banner can't nag forever).
+   - Backup nudge banner when there is history and no backup in 14 days.
 2. **Workout (in progress)** — modelled on Hevy's logging screen
    - Header: live duration (from `started_at`), total volume and completed-set count;
      "Finish" button.
@@ -297,7 +299,7 @@ tapping it reopens the workout.
    - Show "last backup" date and nudge if older than 14 days. Stored in `localStorage`
      (not in the DB: an exported file would otherwise carry a stale timestamp and an import
      would overwrite it).
-   - App version and storage status (`navigator.storage.persisted()`).
+   - Build time and storage status (`navigator.storage.persisted()`).
 
 ---
 
