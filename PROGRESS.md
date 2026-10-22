@@ -61,6 +61,12 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Muscle-group icons on exercises (drawn SVG per muscle group; no image column needed)
 - [x] **Data-loss fix**: `preserveOnInitFailure: true` (see SPEC §7)
 
+## Feedback round 2 (2026-10-22) ✅
+- [x] Exercise photos (free-exercise-db, public domain) for all 52 seed exercises, bundled offline
+- [x] Own photo for any exercise (new-exercise sheet + progress page), stored in DB (migration 3)
+- [x] Hevy-style illustrations need a paid license — not used (owner chose free photos)
+- [x] DB install retries; stress-tested close→reopen cycles and tab takeover without data loss
+
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
 - Rest-timer beep on iOS (Web Audio is muted while the ringer switch is on silent).
