@@ -43,12 +43,26 @@ async function importDb(bytes: Uint8Array) {
   }
 }
 
+// preserveOnInitFailure is critical: by default a failed install (e.g. the app still open
+// elsewhere, or an old instance still shutting down) calls removeVfs(), which DELETES the
+// whole pool directory — i.e. all data. forceReinitIfPreviouslyFailed lets us retry, since
+// sqlite-wasm otherwise caches the failure. (A plain variable, as the typings lack that key.)
+const POOL_OPTIONS = { name: 'ttp', preserveOnInitFailure: true, forceReinitIfPreviouslyFailed: true };
+const INSTALL_ATTEMPTS = 6;
+
 const ready = (async () => {
   const sqlite3 = await sqlite3InitModule();
-  // preserveOnInitFailure is critical: by default a failed install (e.g. the app still open
-  // elsewhere, or an old instance still shutting down) calls removeVfs(), which DELETES the
-  // whole pool directory — i.e. all data.
-  pool = await sqlite3.installOpfsSAHPoolVfs({ name: 'ttp', preserveOnInitFailure: true });
+  // A previous instance (e.g. after iOS relaunches the app) may still hold the file handles
+  // for a moment; retry before reporting "open elsewhere".
+  for (let attempt = 1; ; attempt++) {
+    try {
+      pool = await sqlite3.installOpfsSAHPoolVfs(POOL_OPTIONS);
+      break;
+    } catch (e) {
+      if (attempt === INSTALL_ATTEMPTS) throw e;
+      await new Promise((r) => setTimeout(r, 300 * attempt));
+    }
+  }
   open();
 })();
 
