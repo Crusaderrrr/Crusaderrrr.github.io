@@ -82,4 +82,10 @@ export const migrations: string[] = [
   ${seedImages
     .map(([name, slug]) => `UPDATE exercise SET image = '/exercises/${slug}.jpg' WHERE name = '${name}' AND is_custom = 0;`)
     .join('\n  ')}`,
+  // 4: grip selector — which exercises offer it, and the grip used per logged exercise.
+  `ALTER TABLE exercise ADD COLUMN has_grip INTEGER NOT NULL DEFAULT 0;
+  UPDATE exercise SET has_grip = 1 WHERE is_custom = 0 AND name IN
+    ('Lat Pulldown', 'Seated Cable Row', 'T-Bar Row', 'Pull-Up');
+  ALTER TABLE workout_exercise ADD COLUMN grip TEXT
+    CHECK (grip IN ('wide', 'normal', 'narrow', 'parallel_wide', 'parallel_normal'));`,
 ];

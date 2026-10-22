@@ -2,7 +2,7 @@ import { batch, query, type Statement } from '../db/client';
 import { parseLocalDate, today } from '../domain/dates';
 import { nextSetValues, type SetType, type SetValues } from '../domain/sets';
 import { defaultTitle } from '../domain/workout';
-import type { MuscleGroup } from './exercises';
+import type { Grip, MuscleGroup } from './exercises';
 
 export type Workout = {
   id: number;
@@ -30,6 +30,8 @@ export type WorkoutExercise = {
   muscleGroup: MuscleGroup;
   image: string | null;
   restSeconds: number;
+  hasGrip: number;
+  grip: Grip | null;
   position: number;
   sets: WorkoutSet[];
   /** Completed sets from the most recent earlier finished workout with this exercise. */
@@ -52,7 +54,7 @@ export async function getWorkout(id: number): Promise<WorkoutDetail | null> {
 
   const exercises = await query<Omit<WorkoutExercise, 'sets' | 'previous'>>(
     `SELECT we.id, we.exercise_id AS exerciseId, e.name, e.muscle_group AS muscleGroup, e.image,
-            e.rest_seconds AS restSeconds, we.position
+            e.rest_seconds AS restSeconds, e.has_grip AS hasGrip, we.grip, we.position
      FROM workout_exercise we JOIN exercise e ON e.id = we.exercise_id
      WHERE we.workout_id = ? ORDER BY we.position, we.id`,
     [id],
@@ -64,17 +66,22 @@ export async function getWorkout(id: number): Promise<WorkoutDetail | null> {
      WHERE we.workout_id = ? ORDER BY s.position, s.id`,
     [id],
   );
-  // For each exercise: the first matching workout_exercise in the latest earlier finished workout.
-  const previous = await query<{ exerciseId: number; weightKg: number; reps: number }>(
-    `SELECT we.exercise_id AS exerciseId, s.weight_kg AS weightKg, s.reps
-     FROM workout_set s JOIN workout_exercise we ON we.id = s.workout_exercise_id
-     WHERE s.completed = 1 AND we.id IN (
-       SELECT (SELECT we2.id FROM workout_exercise we2 JOIN workout w2 ON w2.id = we2.workout_id
-               WHERE we2.exercise_id = x.exercise_id AND w2.finished_at IS NOT NULL AND w2.id <> ?1
-                 AND (w2.date, w2.started_at) < (?2, ?3)
-               ORDER BY w2.date DESC, w2.started_at DESC, we2.position LIMIT 1)
-       FROM (SELECT DISTINCT exercise_id FROM workout_exercise WHERE workout_id = ?1) x)
-     ORDER BY s.position, s.id`,
+  // For each (exercise, grip) in this workout: the matching workout_exercise from the latest
+  // earlier finished workout. Same grip wins; history logged without a grip is the fallback.
+  const previous = await query<{ exerciseId: number; grip: Grip | null; weightKg: number; reps: number }>(
+    `WITH x AS (SELECT DISTINCT exercise_id, grip FROM workout_exercise WHERE workout_id = ?1),
+     pick AS (
+       SELECT x.exercise_id AS exerciseId, x.grip,
+         (SELECT we2.id FROM workout_exercise we2 JOIN workout w2 ON w2.id = we2.workout_id
+          WHERE we2.exercise_id = x.exercise_id
+            AND (x.grip IS NULL OR we2.grip IS x.grip OR we2.grip IS NULL)
+            AND w2.finished_at IS NOT NULL AND w2.id <> ?1 AND (w2.date, w2.started_at) < (?2, ?3)
+          ORDER BY (we2.grip IS x.grip) DESC, w2.date DESC, w2.started_at DESC, we2.position
+          LIMIT 1) AS weId
+       FROM x)
+     SELECT pick.exerciseId, pick.grip, s.weight_kg AS weightKg, s.reps
+     FROM pick JOIN workout_set s ON s.workout_exercise_id = pick.weId
+     WHERE s.completed = 1 ORDER BY s.position, s.id`,
     [id, w.date, w.startedAt],
   );
 
@@ -83,14 +90,9 @@ export async function getWorkout(id: number): Promise<WorkoutDetail | null> {
     exercises: exercises.map((e) => ({
       ...e,
       sets: sets.filter((s) => s.weId === e.id),
-      previous: previous.filter((p) => p.exerciseId === e.exerciseId),
+      previous: previous.filter((p) => p.exerciseId === e.exerciseId && p.grip === e.grip),
     })),
   };
-}
-
-export async function hasFinishedWorkouts(): Promise<boolean> {
-  const [row] = await query('SELECT 1 FROM workout WHERE finished_at IS NOT NULL LIMIT 1');
-  return !!row;
 }
 
 /** Starts today's workout; if today was marked skipped, the skip is removed (SPEC §5.1). */
@@ -153,6 +155,14 @@ export function addExercises(workoutId: number, exerciseIds: number[]) {
               VALUES (?1, ?2, (SELECT COALESCE(MAX(position), -1) + 1 FROM workout_exercise WHERE workout_id = ?1))`,
         bind: [workoutId, exerciseId],
       },
+      // Grip exercises start with the grip used last time (else "normal").
+      {
+        sql: `UPDATE workout_exercise SET grip = (
+                SELECT COALESCE((SELECT grip FROM workout_exercise WHERE exercise_id = ?1 AND grip IS NOT NULL
+                                 ORDER BY id DESC LIMIT 1), 'normal')
+              ) WHERE id = last_insert_rowid() AND (SELECT has_grip FROM exercise WHERE id = ?1) = 1`,
+        bind: [exerciseId],
+      },
       { sql: 'INSERT INTO workout_set (workout_exercise_id, position) VALUES (last_insert_rowid(), 0)' },
     ]),
   );
@@ -163,7 +173,16 @@ export function removeWorkoutExercise(weId: number) {
 }
 
 export function replaceExercise(weId: number, exerciseId: number) {
-  return query('UPDATE workout_exercise SET exercise_id = ? WHERE id = ?', [exerciseId, weId]);
+  return query(
+    `UPDATE workout_exercise SET exercise_id = ?1,
+       grip = CASE WHEN (SELECT has_grip FROM exercise WHERE id = ?1) = 1 THEN COALESCE(grip, 'normal') END
+     WHERE id = ?2`,
+    [exerciseId, weId],
+  );
+}
+
+export function setGrip(weId: number, grip: Grip) {
+  return query('UPDATE workout_exercise SET grip = ? WHERE id = ?', [grip, weId]);
 }
 
 /** Swaps the positions of two workout exercises. */
@@ -259,7 +278,7 @@ export function finalizeWorkout(
 }
 
 export type HistoryItem = Workout & {
-  exercises: { name: string; sets: number }[];
+  exercises: { name: string; sets: number; grip: Grip | null }[];
   volume: number;
 };
 
@@ -267,8 +286,8 @@ export async function listHistory(): Promise<HistoryItem[]> {
   const workouts = await query<Workout>(
     `SELECT ${W_COLS} FROM workout WHERE finished_at IS NOT NULL ORDER BY date DESC, started_at DESC`,
   );
-  const rows = await query<{ workoutId: number; name: string; sets: number; volume: number }>(
-    `SELECT we.workout_id AS workoutId, e.name, COUNT(s.id) AS sets,
+  const rows = await query<{ workoutId: number; name: string; grip: Grip | null; sets: number; volume: number }>(
+    `SELECT we.workout_id AS workoutId, e.name, we.grip, COUNT(s.id) AS sets,
             COALESCE(SUM(CASE WHEN s.set_type <> 'warmup' THEN s.weight_kg * s.reps END), 0) AS volume
      FROM workout_exercise we
      JOIN exercise e ON e.id = we.exercise_id
@@ -280,7 +299,7 @@ export async function listHistory(): Promise<HistoryItem[]> {
     const mine = rows.filter((r) => r.workoutId === w.id);
     return {
       ...w,
-      exercises: mine.map((r) => ({ name: r.name, sets: r.sets })),
+      exercises: mine.map((r) => ({ name: r.name, sets: r.sets, grip: r.grip })),
       volume: mine.reduce((a, r) => a + r.volume, 0),
     };
   });

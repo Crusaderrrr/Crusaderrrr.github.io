@@ -15,6 +15,16 @@ export const EQUIPMENT = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight
 export type MuscleGroup = (typeof MUSCLE_GROUPS)[number];
 export type Equipment = (typeof EQUIPMENT)[number];
 
+export const GRIPS = ['wide', 'normal', 'narrow', 'parallel_wide', 'parallel_normal'] as const;
+export type Grip = (typeof GRIPS)[number];
+export const GRIP_NAMES: Record<Grip, string> = {
+  wide: 'Wide',
+  normal: 'Normal',
+  narrow: 'Narrow',
+  parallel_wide: 'Parallel wide',
+  parallel_normal: 'Parallel normal',
+};
+
 export const label = (s: string) => (s === 'full_body' ? 'Full body' : s[0]!.toUpperCase() + s.slice(1));
 
 export type Exercise = {
@@ -28,10 +38,12 @@ export type Exercise = {
   favorite: number;
   /** Bundled photo path or JPEG data URL; null → muscle-group icon. */
   image: string | null;
+  /** Offers the grip selector when logged (lat pulldown, rows…). */
+  hasGrip: number;
 };
 
 const COLS = `id, name, muscle_group AS muscleGroup, equipment, is_custom AS isCustom, archived,
-              rest_seconds AS restSeconds, favorite, image`;
+              rest_seconds AS restSeconds, favorite, image, has_grip AS hasGrip`;
 
 export function listExercises(archived = false): Promise<Exercise[]> {
   return query<Exercise>(`SELECT ${COLS} FROM exercise WHERE archived = ? ORDER BY name`, [archived ? 1 : 0]);
@@ -47,13 +59,15 @@ export async function createExercise(e: {
   muscleGroup: MuscleGroup;
   equipment: Equipment;
   image: string | null;
+  hasGrip: boolean;
 }): Promise<number> {
   const name = e.name.trim();
   const [dup] = await query('SELECT 1 FROM exercise WHERE name = ?', [name]);
   if (dup) throw new Error(`"${name}" already exists (it may be archived).`);
   const [row] = await query<{ id: number }>(
-    `INSERT INTO exercise (name, muscle_group, equipment, is_custom, image) VALUES (?, ?, ?, 1, ?) RETURNING id`,
-    [name, e.muscleGroup, e.equipment, e.image],
+    `INSERT INTO exercise (name, muscle_group, equipment, is_custom, image, has_grip)
+     VALUES (?, ?, ?, 1, ?, ?) RETURNING id`,
+    [name, e.muscleGroup, e.equipment, e.image, e.hasGrip ? 1 : 0],
   );
   return row!.id;
 }
@@ -72,6 +86,10 @@ export async function removeExercise(id: number): Promise<'deleted' | 'archived'
 
 export function unarchiveExercise(id: number) {
   return query('UPDATE exercise SET archived = 0 WHERE id = ?', [id]);
+}
+
+export function setHasGrip(id: number, hasGrip: boolean) {
+  return query('UPDATE exercise SET has_grip = ? WHERE id = ?', [hasGrip ? 1 : 0, id]);
 }
 
 export function setExerciseImage(id: number, image: string | null) {
