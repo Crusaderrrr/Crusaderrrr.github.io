@@ -1,8 +1,15 @@
 import { useRef, useState } from 'react';
-import { formatWeight, parseReps, parseWeight, type SetValues } from '../../domain/sets';
+import { formatWeight, parseReps, parseWeight, type SetType, type SetValues } from '../../domain/sets';
 import { deleteSet, updateSetValue, type WorkoutSet } from '../../repositories/workouts';
 
 const fmt = (n: number | null) => (n === null ? '' : formatWeight(n));
+
+export const SET_TYPE_COLOR: Record<SetType, string> = {
+  normal: 'text-neutral-100',
+  warmup: 'text-yellow-400',
+  drop: 'text-blue-400',
+  failure: 'text-red-500',
+};
 
 export function formatPrevious(p: SetValues | undefined) {
   if (!p || p.reps === null) return '—';
@@ -35,14 +42,6 @@ export default function SetRow({
   const touchX = useRef<number | null>(null);
 
   const done = !!set.completed;
-  const labelColor =
-    set.setType === 'warmup'
-      ? 'text-amber-400'
-      : set.setType === 'drop'
-        ? 'text-sky-400'
-        : set.setType === 'failure'
-          ? 'text-red-400'
-          : '';
 
   return (
     <div className="relative overflow-hidden">
@@ -67,7 +66,7 @@ export default function SetRow({
         }}
         onTouchEnd={() => (touchX.current = null)}
       >
-        <button className={`h-9 rounded-lg bg-neutral-800 font-semibold ${labelColor}`} onClick={onLabel}>
+        <button className={`h-9 rounded-lg bg-neutral-800 font-semibold ${SET_TYPE_COLOR[set.setType]}`} onClick={onLabel}>
           {label}
         </button>
         <span className="truncate text-center text-sm text-neutral-500">{formatPrevious(previous)}</span>

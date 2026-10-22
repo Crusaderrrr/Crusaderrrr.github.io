@@ -26,7 +26,7 @@ export default function Sheet({
             ✕
           </button>
         </div>
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-1">{children}</div>
       </div>
     </div>
   );

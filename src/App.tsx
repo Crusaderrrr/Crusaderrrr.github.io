@@ -39,7 +39,8 @@ function Shell() {
 
   return (
     <div className={`flex h-full flex-col ${fullScreen ? '' : 'pt-[env(safe-area-inset-top)]'}`}>
-      <main className="flex-1 overflow-y-auto px-4 py-4">
+      {/* Logging screens manage their own scrolling (fixed header + scrolling body). */}
+      <main className={fullScreen ? 'min-h-0 flex-1' : 'flex-1 overflow-y-auto px-4 py-4'}>
         <Routes>
           <Route path="/" element={<TodayScreen />} />
           <Route path="/workout" element={<ActiveWorkoutScreen />} />

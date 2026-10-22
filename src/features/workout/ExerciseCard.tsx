@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import Sheet, { btn } from '../../components/Sheet';
-import { completeValues, SET_TYPE_NAMES, SET_TYPES, setLabels } from '../../domain/sets';
+import MuscleIcon from '../../components/MuscleIcon';
+import { completeValues, SET_TYPE_NAMES, SET_TYPES, setLabels, type SetType } from '../../domain/sets';
 import { formatClock } from '../../domain/workout';
 import { setRestSeconds } from '../../repositories/exercises';
 import {
@@ -15,7 +16,9 @@ import {
   type WorkoutSet,
 } from '../../repositories/workouts';
 import { unlockAudio } from './beep';
-import SetRow from './SetRow';
+import SetRow, { SET_TYPE_COLOR } from './SetRow';
+
+const SET_TYPE_LETTER: Record<SetType, string> = { normal: '1', warmup: 'W', drop: 'D', failure: 'F' };
 
 const REST_OPTIONS = [0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300];
 const restLabel = (s: number) => (s === 0 ? 'Off' : formatClock(s));
@@ -55,8 +58,9 @@ export default function ExerciseCard({
 
   return (
     <section className="rounded-2xl bg-neutral-900 p-3">
-      <div className="flex items-center justify-between">
-        <Link to={`/exercises/${we.exerciseId}`} className="font-semibold text-green-500">
+      <div className="flex items-center gap-3">
+        <MuscleIcon group={we.muscleGroup} />
+        <Link to={`/exercises/${we.exerciseId}`} className="min-w-0 flex-1 truncate font-semibold text-green-500">
           {we.name}
         </Link>
         <button className="px-2 text-xl text-neutral-400" onClick={() => setMenu(true)} aria-label="Exercise menu">
@@ -97,12 +101,16 @@ export default function ExerciseCard({
             {SET_TYPES.map((t) => (
               <button
                 key={t}
-                className={`${btn.secondary} text-left ${t === typeFor.setType ? 'ring-2 ring-green-600' : ''}`}
+                // ring-inset: an outer ring gets clipped by the sheet's scroll container
+                className={`${btn.secondary} flex items-center gap-3 text-left ${
+                  t === typeFor.setType ? 'ring-2 ring-green-600 ring-inset' : ''
+                }`}
                 onClick={() => {
                   void setSetType(typeFor.id, t);
                   setTypeFor(null);
                 }}
               >
+                <span className={`w-5 text-center font-bold ${SET_TYPE_COLOR[t]}`}>{SET_TYPE_LETTER[t]}</span>
                 {SET_TYPE_NAMES[t]}
               </button>
             ))}

@@ -65,8 +65,10 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
   };
 
   return (
-    <div className={`flex flex-col gap-3 ${workout.restEndsAt && mode === 'active' ? 'pb-24' : 'pb-6'}`}>
-      <header className="sticky top-0 z-20 -mx-4 -mt-4 border-b border-neutral-800 bg-neutral-950/95 px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 backdrop-blur">
+    // Header outside the scrolling body so it always stays on top (more reliable than
+    // position: sticky in iOS standalone mode).
+    <div className="flex h-full flex-col">
+      <header className="shrink-0 border-b border-neutral-800 bg-neutral-950 px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3">
         <div className="flex items-center justify-between">
           {mode === 'active' ? (
             <button className="px-1 text-2xl text-neutral-400" onClick={() => navigate('/')} aria-label="Minimize">
@@ -90,37 +92,43 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
         </div>
       </header>
 
-      {mode === 'edit' && <EditFields workout={workout} />}
-
-      {workout.exercises.map((we, i) => (
-        <ExerciseCard
-          key={we.id}
-          we={we}
-          workoutId={workout.id}
-          withRest={mode === 'active'}
-          onMove={workout.exercises.length > 1 ? (dir) => move(i, dir) : undefined}
-          onReplace={() => setPicker({ replace: we.id })}
-        />
-      ))}
-
-      {workout.exercises.length === 0 && (
-        <p className="py-8 text-center text-neutral-500">Add your first exercise to get started.</p>
-      )}
-
-      <button className={btn.primary} onClick={() => setPicker({})}>
-        + Add exercise
-      </button>
-      <button
-        className={btn.danger}
-        onClick={() => {
-          if (confirm(mode === 'active' ? 'Discard this workout?' : 'Delete this workout?')) {
-            if (mode === 'active') void discard();
-            else void deleteWorkout(workout.id).then(() => navigate('/history', { replace: true }));
-          }
-        }}
+      <div
+        className={`flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pt-4 ${
+          workout.restEndsAt && mode === 'active' ? 'pb-28' : 'pb-[max(1.5rem,env(safe-area-inset-bottom))]'
+        }`}
       >
-        {mode === 'active' ? 'Discard workout' : 'Delete workout'}
-      </button>
+        {mode === 'edit' && <EditFields workout={workout} />}
+
+        {workout.exercises.map((we, i) => (
+          <ExerciseCard
+            key={we.id}
+            we={we}
+            workoutId={workout.id}
+            withRest={mode === 'active'}
+            onMove={workout.exercises.length > 1 ? (dir) => move(i, dir) : undefined}
+            onReplace={() => setPicker({ replace: we.id })}
+          />
+        ))}
+
+        {workout.exercises.length === 0 && (
+          <p className="py-8 text-center text-neutral-500">Add your first exercise to get started.</p>
+        )}
+
+        <button className={btn.primary} onClick={() => setPicker({})}>
+          + Add exercise
+        </button>
+        <button
+          className={btn.danger}
+          onClick={() => {
+            if (confirm(mode === 'active' ? 'Discard this workout?' : 'Delete this workout?')) {
+              if (mode === 'active') void discard();
+              else void deleteWorkout(workout.id).then(() => navigate('/history', { replace: true }));
+            }
+          }}
+        >
+          {mode === 'active' ? 'Discard workout' : 'Delete workout'}
+        </button>
+      </div>
 
       {mode === 'active' && workout.restEndsAt && <RestBar workoutId={workout.id} endsAt={workout.restEndsAt} />}
 

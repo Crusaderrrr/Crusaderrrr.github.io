@@ -39,7 +39,7 @@ export default function RestBar({ workoutId, endsAt }: { workoutId: number; ends
           +15s
         </button>
         <button
-          className="rounded-lg bg-sky-600 px-3 py-2 font-medium"
+          className="rounded-lg bg-green-600 px-3 py-2 font-medium"
           onClick={() => updateWorkout(workoutId, { restEndsAt: null })}
         >
           Skip
