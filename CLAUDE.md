@@ -36,7 +36,8 @@ Run `typecheck` and `test` before saying a task is done.
 - Local dates via `domain/dates.ts` only — never `toISOString()` for calendar dates.
 - ISO weekdays (1 = Mon … 7 = Sun); convert from JS `getDay()` in one helper.
 - VFS is `opfs-sahpool` with pool name `ttp`, DB file `/ttp.sqlite3`; no COOP/COEP headers
-  needed. Never rename either after launch.
+  needed. Never rename either after launch. Always pass `preserveOnInitFailure: true` —
+  otherwise a failed install deletes all data.
 - Vite: `base: '/'`, `optimizeDeps.exclude: ['@sqlite.org/sqlite-wasm']`,
   `worker.format: 'es'`. PWA `globPatterns` must include `**/*.wasm`.
 - `HashRouter`, not `BrowserRouter` (GitHub Pages has no SPA fallback).

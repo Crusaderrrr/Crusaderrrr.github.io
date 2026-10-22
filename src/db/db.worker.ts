@@ -45,7 +45,10 @@ async function importDb(bytes: Uint8Array) {
 
 const ready = (async () => {
   const sqlite3 = await sqlite3InitModule();
-  pool = await sqlite3.installOpfsSAHPoolVfs({ name: 'ttp' });
+  // preserveOnInitFailure is critical: by default a failed install (e.g. the app still open
+  // elsewhere, or an old instance still shutting down) calls removeVfs(), which DELETES the
+  // whole pool directory — i.e. all data.
+  pool = await sqlite3.installOpfsSAHPoolVfs({ name: 'ttp', preserveOnInitFailure: true });
   open();
 })();
 
