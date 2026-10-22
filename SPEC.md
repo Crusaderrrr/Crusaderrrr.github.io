@@ -115,8 +115,10 @@ CREATE TABLE exercise (
   equipment     TEXT    NOT NULL,   -- barbell | dumbbell | machine | cable | bodyweight | kettlebell | other
   is_custom     INTEGER NOT NULL DEFAULT 0,
   archived      INTEGER NOT NULL DEFAULT 0,  -- hide instead of delete (keeps history intact)
-  rest_seconds  INTEGER NOT NULL DEFAULT 120 CHECK (rest_seconds >= 0)  -- 0 = timer off; remembered per exercise
+  rest_seconds  INTEGER NOT NULL DEFAULT 120 CHECK (rest_seconds >= 0), -- 0 = timer off; remembered per exercise
+  favorite      INTEGER NOT NULL DEFAULT 0   -- migration 2; ★ / Favourites section
 );
+-- Exercise icons are derived from muscle_group (inline SVG, works offline); no image column.
 
 CREATE TABLE workout (
   id            INTEGER PRIMARY KEY,
@@ -321,6 +323,8 @@ tapping it reopens the workout.
 - **Home-screen storage is separate from Safari.** Test only via the installed icon.
 - **Single-tab assumption** (`opfs-sahpool`): if the VFS fails to install because another
   instance holds it, show a clear "App is open elsewhere" message instead of a blank screen.
+- **`preserveOnInitFailure: true` is mandatory.** Without it, a failed VFS install calls
+  `removeVfs()` and deletes the whole pool directory (all data). Found in testing on 2026-10-22.
 - **iOS PWA polish.** `viewport-fit=cover` + `env(safe-area-inset-*)` padding (bottom tab bar
   sits above the home indicator); `apple-touch-icon` (180×180) and
   `apple-mobile-web-app-*` meta tags; all inputs ≥ 16px font-size, or iOS zooms on focus.

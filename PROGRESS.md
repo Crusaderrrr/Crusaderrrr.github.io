@@ -52,6 +52,15 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Charts (top weight, e1RM, volume) with 1M / 3M / 1Y / All
 - [x] PR cards, session history
 
+## Feedback round 1 (2026-10-22) ✅
+- [x] Gap between the workout header and the first exercise
+- [x] Log Workout header pinned (header outside the scrolling body)
+- [x] Rest timer Skip button green
+- [x] Set-type menu: first item no longer clipped; W / D / F letters in yellow / blue / red
+- [x] Favourite exercises (★) + Favourites section in Exercises and the picker (migration 2)
+- [x] Muscle-group icons on exercises (drawn SVG per muscle group; no image column needed)
+- [x] **Data-loss fix**: `preserveOnInitFailure: true` (see SPEC §7)
+
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
 - Rest-timer beep on iOS (Web Audio is muted while the ringer switch is on silent).
