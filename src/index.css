@@ -12,6 +12,15 @@ body {
   overscroll-behavior: none;
 }
 
+/* Rejected set tick (no reps yet). */
+@keyframes shake {
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+.shake {
+  animation: shake 0.3s;
+}
+
 /* iOS zooms into inputs with font-size < 16px. */
 input,
 select,

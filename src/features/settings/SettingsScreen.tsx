@@ -1,38 +1,85 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { btn } from '../../components/Sheet';
+import { useDbQuery } from '../../hooks/useDbQuery';
 import { countExercises, getMeta } from '../../repositories/meta';
-
-type Info = { launches: string; firstLaunch: string; exercises: number; persisted: boolean };
+import { backupOverdue, exportBackup, importBackup, lastBackupAt } from './backup';
 
 export default function SettingsScreen() {
-  const [info, setInfo] = useState<Info>();
+  const info = useDbQuery(
+    async () => {
+      const [meta, exercises, persisted] = await Promise.all([
+        getMeta(),
+        countExercises(),
+        navigator.storage?.persisted?.() ?? false,
+      ]);
+      return { launches: meta.launch_count ?? '0', exercises, persisted };
+    },
+    [],
+  );
+  const [last, setLast] = useState(lastBackupAt);
+  const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    Promise.all([getMeta(), countExercises(), navigator.storage?.persisted?.() ?? false]).then(
-      ([meta, exercises, persisted]) =>
-        setInfo({
-          launches: meta.launch_count ?? '0',
-          firstLaunch: meta.first_launch_at ? new Date(meta.first_launch_at).toLocaleString() : '—',
-          exercises,
-          persisted,
-        }),
-    );
-  }, []);
+  const doExport = async () => {
+    try {
+      if (await exportBackup()) {
+        setLast(lastBackupAt());
+        setMessage('Backup exported.');
+      }
+    } catch (e) {
+      setMessage(`Export failed: ${e instanceof Error ? e.message : e}`);
+    }
+  };
+
+  const doImport = async (file: File | undefined) => {
+    if (!file) return;
+    if (!confirm(`Replace ALL data on this phone with "${file.name}"? This cannot be undone.`)) return;
+    try {
+      await importBackup(file);
+      location.reload(); // simplest way to reset every screen to the new data
+    } catch (e) {
+      setMessage(`Import failed: ${e instanceof Error ? e.message : e}`);
+    }
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Settings</h1>
-      <section className="rounded-xl bg-neutral-900 p-4">
-        <h2 className="mb-2 font-semibold">Storage</h2>
+
+      <section className="flex flex-col gap-3 rounded-2xl bg-neutral-900 p-4">
+        <h2 className="font-semibold">Backup</h2>
+        <p className={`text-sm ${backupOverdue() ? 'text-amber-400' : 'text-neutral-400'}`}>
+          Last backup: {last ? new Date(last).toLocaleDateString('en-GB') : 'never'}
+          {backupOverdue() && ' — time to back up! Your data lives only on this phone.'}
+        </p>
+        <button className={btn.primary} onClick={doExport}>
+          Export database
+        </button>
+        <label className={`${btn.secondary} text-center`}>
+          Import database
+          <input
+            type="file"
+            className="hidden"
+            onChange={(e) => {
+              void doImport(e.target.files?.[0]);
+              e.target.value = '';
+            }}
+          />
+        </label>
+        {message && <p className="text-sm text-neutral-300">{message}</p>}
+      </section>
+
+      <section className="rounded-2xl bg-neutral-900 p-4">
+        <h2 className="mb-2 font-semibold">About</h2>
         {info && (
           <dl className="grid grid-cols-2 gap-y-1 text-sm">
-            <dt className="text-neutral-400">App launches</dt>
-            <dd>{info.launches}</dd>
-            <dt className="text-neutral-400">First launch</dt>
-            <dd>{info.firstLaunch}</dd>
-            <dt className="text-neutral-400">Exercises</dt>
-            <dd>{info.exercises}</dd>
             <dt className="text-neutral-400">Persistent storage</dt>
             <dd>{info.persisted ? 'Yes' : 'No'}</dd>
+            <dt className="text-neutral-400">Exercises</dt>
+            <dd>{info.exercises}</dd>
+            <dt className="text-neutral-400">App launches</dt>
+            <dd>{info.launches}</dd>
+            <dt className="text-neutral-400">Build</dt>
+            <dd>{new Date(__BUILD_TIME__).toLocaleString('en-GB')}</dd>
           </dl>
         )}
       </section>

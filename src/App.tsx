@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Navigate, Route, Routes } from 'react-router';
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router';
 import { dbReady } from './db/client';
 import TabBar from './components/TabBar';
+import { formatClock } from './domain/workout';
+import { useDbQuery, useNow } from './hooks/useDbQuery';
+import { getActiveWorkout } from './repositories/workouts';
 import TodayScreen from './features/today/TodayScreen';
 import HistoryScreen from './features/history/HistoryScreen';
+import { EditWorkoutScreen, WorkoutDetailScreen } from './features/history/WorkoutDetailScreen';
 import CalendarScreen from './features/calendar/CalendarScreen';
+import PlanScreen from './features/calendar/PlanScreen';
 import ExercisesScreen from './features/exercises/ExercisesScreen';
+import ExerciseProgressScreen from './features/progress/ExerciseProgressScreen';
 import SettingsScreen from './features/settings/SettingsScreen';
+import ActiveWorkoutScreen from './features/workout/ActiveWorkoutScreen';
 
 type DbState = { status: 'loading' } | { status: 'ready' } | { status: 'error'; message: string };
 
@@ -22,21 +29,51 @@ export default function App() {
 
   if (db.status === 'loading') return null;
   if (db.status === 'error') return <DbErrorScreen message={db.message} />;
+  return <Shell />;
+}
+
+function Shell() {
+  const { pathname } = useLocation();
+  // The logging screens are full-screen, like Hevy.
+  const fullScreen = pathname === '/workout' || pathname.endsWith('/edit');
 
   return (
-    <div className="flex h-full flex-col pt-[env(safe-area-inset-top)]">
+    <div className={`flex h-full flex-col ${fullScreen ? '' : 'pt-[env(safe-area-inset-top)]'}`}>
       <main className="flex-1 overflow-y-auto px-4 py-4">
         <Routes>
           <Route path="/" element={<TodayScreen />} />
+          <Route path="/workout" element={<ActiveWorkoutScreen />} />
           <Route path="/history" element={<HistoryScreen />} />
+          <Route path="/history/:id" element={<WorkoutDetailScreen />} />
+          <Route path="/history/:id/edit" element={<EditWorkoutScreen />} />
           <Route path="/calendar" element={<CalendarScreen />} />
+          <Route path="/plan" element={<PlanScreen />} />
           <Route path="/exercises" element={<ExercisesScreen />} />
+          <Route path="/exercises/:id" element={<ExerciseProgressScreen />} />
           <Route path="/settings" element={<SettingsScreen />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      <TabBar />
+      {!fullScreen && (
+        <>
+          <ActiveWorkoutBar />
+          <TabBar />
+        </>
+      )}
     </div>
+  );
+}
+
+/** Mini-bar above the tabs while a workout is in progress. */
+function ActiveWorkoutBar() {
+  const active = useDbQuery(getActiveWorkout, []);
+  const now = useNow();
+  if (!active) return null;
+  return (
+    <Link to="/workout" className="flex items-center justify-between bg-green-700 px-4 py-2 text-sm font-medium">
+      <span className="truncate">🏋 {active.title}</span>
+      <span className="tabular-nums">{formatClock((now - Date.parse(active.startedAt)) / 1000)} ›</span>
+    </Link>
   );
 }
 
