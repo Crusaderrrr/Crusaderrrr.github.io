@@ -1,29 +1,62 @@
 @import 'tailwindcss';
 
+/* The document never scrolls: on iOS the root scroller rubber-bands the whole UI (tab bar
+   included) off-screen. Only the app's own scroll areas scroll, and they contain their
+   overscroll. */
 html,
-body,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  position: fixed;
+  inset: 0;
+  @apply bg-neutral-950 text-neutral-100 antialiased;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 #root {
   height: 100%;
 }
 
-body {
-  @apply bg-neutral-950 text-neutral-100 antialiased;
-  -webkit-tap-highlight-color: transparent;
-  overscroll-behavior: none;
+.scroll-area {
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbars on horizontal chip rows. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Rejected set tick (no reps yet). */
 @keyframes shake {
-  25% { transform: translateX(-6px); }
-  75% { transform: translateX(6px); }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
 }
 .shake {
   animation: shake 0.3s;
 }
 
-/* iOS zooms into inputs with font-size < 16px. */
+/* iOS zooms into inputs with font-size < 16px; inputs must stay selectable. */
 input,
 select,
 textarea {
   font-size: 16px;
+  -webkit-user-select: text;
+  user-select: text;
 }
