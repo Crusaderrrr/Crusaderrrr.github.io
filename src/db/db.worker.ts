@@ -1,10 +1,16 @@
-import sqlite3InitModule, { type BindingSpec, type Database } from '@sqlite.org/sqlite-wasm';
+import sqlite3InitModule, { type BindingSpec, type Database, type SAHPoolUtil } from '@sqlite.org/sqlite-wasm';
 import { migrations } from './migrations';
 import type { Request, Response, Statement } from './protocol';
 
+// Pool name and file name are bound to stored data — never rename (SPEC §2).
+const DB_FILE = '/ttp.sqlite3';
+
+let pool: SAHPoolUtil;
 let db: Database;
 
-function migrate() {
+function open() {
+  db = new pool.OpfsSAHPoolDb(DB_FILE);
+  db.exec('PRAGMA foreign_keys = ON');
   const version = Number(db.selectValue('PRAGMA user_version'));
   for (let v = version; v < migrations.length; v++) {
     db.transaction(() => {
@@ -18,13 +24,29 @@ function run({ sql, bind }: Statement) {
   return db.exec({ sql, bind: bind as BindingSpec, rowMode: 'object', returnValue: 'resultRows' });
 }
 
+/** Rejects anything that isn't a SQLite file from this app, at this or an older schema version. */
+function validateBackup(bytes: Uint8Array) {
+  const header = new TextDecoder().decode(bytes.subarray(0, 16));
+  if (header !== 'SQLite format 3\0') throw new Error('Not a SQLite database file.');
+  const version = new DataView(bytes.buffer, bytes.byteOffset).getUint32(60); // user_version
+  if (version < 1) throw new Error('This file is not a TTP backup.');
+  if (version > migrations.length) throw new Error('Backup is from a newer app version — update the app first.');
+}
+
+async function importDb(bytes: Uint8Array) {
+  validateBackup(bytes);
+  db.close();
+  try {
+    await pool.importDb(DB_FILE, bytes);
+  } finally {
+    open(); // reopen (and migrate forward) whatever is on disk now
+  }
+}
+
 const ready = (async () => {
   const sqlite3 = await sqlite3InitModule();
-  // Pool name and file name are bound to stored data — never rename (SPEC §2).
-  const pool = await sqlite3.installOpfsSAHPoolVfs({ name: 'ttp' });
-  db = new pool.OpfsSAHPoolDb('/ttp.sqlite3');
-  db.exec('PRAGMA foreign_keys = ON');
-  migrate();
+  pool = await sqlite3.installOpfsSAHPoolVfs({ name: 'ttp' });
+  open();
 })();
 
 ready.then(
@@ -43,9 +65,16 @@ onmessage = async ({ data: req }: MessageEvent<Request>) => {
       case 'batch':
         res = { id: req.id, ok: true, result: db.transaction(() => req.statements.map(run)) };
         break;
+      case 'export':
+        res = { id: req.id, ok: true, result: pool.exportFile(DB_FILE) };
+        break;
+      case 'import':
+        await importDb(req.bytes);
+        res = { id: req.id, ok: true };
+        break;
     }
   } catch (e) {
-    res = { id: req.id, ok: false, error: String(e) };
+    res = { id: req.id, ok: false, error: e instanceof Error ? e.message : String(e) };
   }
   postMessage(res);
 };

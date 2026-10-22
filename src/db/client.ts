@@ -14,6 +14,9 @@ export const dbReady = new Promise<void>((res, rej) => {
   rejectReady = rej;
 });
 
+/** Fired on window after every write, so mounted screens can re-query (see useDbQuery). */
+export const DB_CHANGE = 'db-change';
+
 worker.onmessage = ({ data }: MessageEvent<Response>) => {
   if (data.id === 0) {
     if (data.ok) resolveReady();
@@ -28,19 +31,32 @@ worker.onmessage = ({ data }: MessageEvent<Response>) => {
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
-function send<T>(req: DistributiveOmit<Request, 'id'>): Promise<T> {
+async function send<T>(req: DistributiveOmit<Request, 'id'>, writes: boolean): Promise<T> {
   const id = nextId++;
-  return new Promise<T>((resolve, reject) => {
+  const result = await new Promise<T>((resolve, reject) => {
     pending.set(id, { resolve: resolve as (v: unknown) => void, reject });
     worker.postMessage({ ...req, id });
   });
+  if (writes) window.dispatchEvent(new Event(DB_CHANGE));
+  return result;
 }
 
+const isRead = (sql: string) => /^\s*(SELECT|WITH|PRAGMA)\b/i.test(sql);
+
 export function query<T = Row>(sql: string, bind?: SqlParam[]): Promise<T[]> {
-  return send<T[]>({ type: 'query', sql, bind });
+  return send<T[]>({ type: 'query', sql, bind }, !isRead(sql));
 }
 
 /** Runs all statements in one transaction; returns each statement's rows. */
 export function batch(statements: Statement[]): Promise<Row[][]> {
-  return send<Row[][]>({ type: 'batch', statements });
+  return send<Row[][]>({ type: 'batch', statements }, true);
+}
+
+export function exportDb(): Promise<Uint8Array> {
+  return send<Uint8Array>({ type: 'export' }, false);
+}
+
+/** Replaces the whole database (validated, then migrated forward in the worker). */
+export function importDb(bytes: Uint8Array): Promise<void> {
+  return send<void>({ type: 'import', bytes }, true);
 }
