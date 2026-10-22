@@ -1,8 +1,15 @@
 import { useRef, useState } from 'react';
+import Icon from '../../components/Icon';
 import { formatWeight, parseReps, parseWeight, type SetType, type SetValues } from '../../domain/sets';
 import { deleteSet, updateSetValue, type WorkoutSet } from '../../repositories/workouts';
 
 const fmt = (n: number | null) => (n === null ? '' : formatWeight(n));
+
+/** Column layout shared by the set table header and its rows. */
+export const SET_GRID = 'grid grid-cols-[2.5rem_1fr_4.5rem_4rem_2.75rem] items-center gap-2';
+
+const field =
+  'h-10 w-full rounded-xl bg-neutral-800 text-center font-semibold tabular-nums outline-none placeholder:font-normal placeholder:text-neutral-600 focus:ring-2 focus:ring-green-500';
 
 export const SET_TYPE_COLOR: Record<SetType, string> = {
   normal: 'text-neutral-100',
@@ -46,14 +53,15 @@ export default function SetRow({
   return (
     <div className="relative overflow-hidden">
       <button
-        className="absolute inset-y-0 right-0 w-20 bg-red-600 font-medium"
+        className="absolute inset-y-1 right-0 flex w-20 items-center justify-center rounded-xl bg-red-600"
         onClick={() => deleteSet(set.id)}
         tabIndex={offset ? 0 : -1}
+        aria-label="Delete set"
       >
-        Delete
+        <Icon name="delete" />
       </button>
       <div
-        className={`relative grid grid-cols-[2.5rem_1fr_4.5rem_4rem_2.75rem] items-center gap-2 py-1.5 transition-transform ${
+        className={`${SET_GRID} relative my-1 rounded-xl p-0.5 transition-[transform,background-color] ${
           done ? 'bg-green-950' : 'bg-neutral-900'
         } ${shaking ? 'shake' : ''}`}
         style={{ transform: `translateX(${offset}px)` }}
@@ -66,12 +74,12 @@ export default function SetRow({
         }}
         onTouchEnd={() => (touchX.current = null)}
       >
-        <button className={`h-9 rounded-lg bg-neutral-800 font-semibold ${SET_TYPE_COLOR[set.setType]}`} onClick={onLabel}>
+        <button className={`h-10 rounded-xl bg-neutral-800 font-bold ${SET_TYPE_COLOR[set.setType]}`} onClick={onLabel}>
           {label}
         </button>
         <span className="truncate text-center text-sm text-neutral-500">{formatPrevious(previous)}</span>
         <input
-          className="h-9 w-full rounded-lg bg-neutral-800 text-center font-medium outline-none placeholder:text-neutral-600 focus:ring-2 focus:ring-green-600"
+          className={field}
           inputMode="decimal"
           placeholder={previous?.weightKg != null ? formatWeight(previous.weightKg) : ''}
           value={weightDraft ?? fmt(set.weightKg)}
@@ -87,7 +95,7 @@ export default function SetRow({
           }}
         />
         <input
-          className="h-9 w-full rounded-lg bg-neutral-800 text-center font-medium outline-none placeholder:text-neutral-600 focus:ring-2 focus:ring-green-600"
+          className={field}
           inputMode="numeric"
           placeholder={previous?.reps != null ? String(previous.reps) : ''}
           value={repsDraft ?? fmt(set.reps)}
@@ -103,11 +111,13 @@ export default function SetRow({
           }}
         />
         <button
-          className={`h-9 rounded-lg text-lg font-bold ${done ? 'bg-green-600 text-white' : 'bg-neutral-800 text-neutral-500'}`}
+          className={`flex h-10 items-center justify-center rounded-xl transition ${
+            done ? 'bg-green-500 text-neutral-950' : 'bg-neutral-800 text-neutral-500'
+          }`}
           onClick={onToggle}
           aria-label={done ? 'Mark not done' : 'Mark done'}
         >
-          ✓
+          <Icon name="check" className="h-6 w-6" />
         </button>
       </div>
     </div>

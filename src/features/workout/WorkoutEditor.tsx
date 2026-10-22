@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { btn, input } from '../../components/Sheet';
+import Icon from '../../components/Icon';
+import { btn, card, input, Stat } from '../../components/ui';
 import { parseLocalDate, toLocalDate } from '../../domain/dates';
 import { formatWeight } from '../../domain/sets';
 import { formatClock, summarize } from '../../domain/workout';
@@ -16,7 +17,7 @@ import {
 } from '../../repositories/workouts';
 import ExercisePicker from '../exercises/ExercisePicker';
 import ExerciseCard from './ExerciseCard';
-import FinishSheet, { resolvableSets, Stat } from './FinishSheet';
+import FinishSheet, { resolvableSets } from './FinishSheet';
 import RestBar from './RestBar';
 
 /**
@@ -68,32 +69,33 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
     // Header outside the scrolling body so it always stays on top (more reliable than
     // position: sticky in iOS standalone mode).
     <div className="flex h-full flex-col">
-      <header className="shrink-0 border-b border-neutral-800 bg-neutral-950 px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3">
-        <div className="flex items-center justify-between">
+      <header className="shrink-0 border-b border-white/[0.06] bg-neutral-950 px-4 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-3">
+        <div className="flex items-center justify-between gap-2">
           {mode === 'active' ? (
-            <button className="px-1 text-2xl text-neutral-400" onClick={() => navigate('/')} aria-label="Minimize">
-              ⌄
+            <button className={btn.icon} onClick={() => navigate('/')} aria-label="Minimize">
+              <Icon name="chevronDown" className="h-6 w-6" />
             </button>
           ) : (
-            <span className="w-6" />
+            <span className="w-10" />
           )}
-          <h1 className="font-semibold">{mode === 'active' ? 'Log Workout' : 'Edit Workout'}</h1>
+          <h1 className="text-[17px] font-semibold">{mode === 'active' ? 'Log Workout' : 'Edit Workout'}</h1>
           <button
-            className="rounded-lg bg-green-600 px-4 py-1.5 font-semibold"
+            className="inline-flex items-center gap-1.5 rounded-full bg-green-500 px-4 py-2 font-semibold text-neutral-950 active:bg-green-600"
             onClick={mode === 'active' ? finish : done}
           >
+            <Icon name={mode === 'active' ? 'finish' : 'check'} className="h-5 w-5" />
             {mode === 'active' ? 'Finish' : 'Done'}
           </button>
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2 text-center">
           {mode === 'active' ? <LiveDuration startedAt={workout.startedAt} /> : <span />}
-          <Stat label="Volume" value={`${formatWeight(summary.volume)} kg`} />
-          <Stat label="Sets" value={String(summary.sets)} />
+          <Stat icon="weight" label="Volume" value={`${formatWeight(summary.volume)} kg`} />
+          <Stat icon="sets" label="Sets" value={String(summary.sets)} />
         </div>
       </header>
 
       <div
-        className={`flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pt-4 ${
+        className={`scroll-area flex min-h-0 flex-1 flex-col gap-3 px-4 pt-4 ${
           workout.restEndsAt && mode === 'active' ? 'pb-28' : 'pb-[max(1.5rem,env(safe-area-inset-bottom))]'
         }`}
       >
@@ -111,11 +113,15 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
         ))}
 
         {workout.exercises.length === 0 && (
-          <p className="py-8 text-center text-neutral-500">Add your first exercise to get started.</p>
+          <div className="flex flex-col items-center gap-3 py-10 text-center text-neutral-500">
+            <Icon name="dumbbell" className="h-12 w-12 text-neutral-700" />
+            Add your first exercise to get started.
+          </div>
         )}
 
         <button className={btn.primary} onClick={() => setPicker({})}>
-          + Add exercise
+          <Icon name="add" />
+          Add exercise
         </button>
         <button
           className={btn.danger}
@@ -126,6 +132,7 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
             }
           }}
         >
+          <Icon name="delete" className="h-5 w-5" />
           {mode === 'active' ? 'Discard workout' : 'Delete workout'}
         </button>
       </div>
@@ -157,7 +164,7 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
 
 function LiveDuration({ startedAt }: { startedAt: string }) {
   const now = useNow();
-  return <Stat label="Duration" value={formatClock((now - Date.parse(startedAt)) / 1000)} />;
+  return <Stat icon="clock" label="Duration" value={formatClock((now - Date.parse(startedAt)) / 1000)} />;
 }
 
 const timeOf = (iso: string) => {
@@ -182,7 +189,7 @@ function EditFields({ workout }: { workout: WorkoutDetail }) {
   };
 
   return (
-    <section className="flex flex-col gap-3 rounded-2xl bg-neutral-900 p-3">
+    <section className={`${card} flex flex-col gap-3 p-3`}>
       <input
         className={input}
         defaultValue={workout.title}

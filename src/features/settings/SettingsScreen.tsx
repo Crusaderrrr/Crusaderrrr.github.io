@@ -1,23 +1,22 @@
-import { useState } from 'react';
-import { btn } from '../../components/Sheet';
+import { useRef, useState } from 'react';
+import Icon from '../../components/Icon';
+import { card, PageHeader, Row, SectionTitle } from '../../components/ui';
 import { useDbQuery } from '../../hooks/useDbQuery';
 import { countExercises, getMeta } from '../../repositories/meta';
 import { backupOverdue, exportBackup, importBackup, lastBackupAt } from './backup';
 
 export default function SettingsScreen() {
-  const info = useDbQuery(
-    async () => {
-      const [meta, exercises, persisted] = await Promise.all([
-        getMeta(),
-        countExercises(),
-        navigator.storage?.persisted?.() ?? false,
-      ]);
-      return { launches: meta.launch_count ?? '0', exercises, persisted };
-    },
-    [],
-  );
+  const info = useDbQuery(async () => {
+    const [meta, exercises, persisted] = await Promise.all([
+      getMeta(),
+      countExercises(),
+      navigator.storage?.persisted?.() ?? false,
+    ]);
+    return { launches: meta.launch_count ?? '0', exercises, persisted };
+  }, []);
   const [last, setLast] = useState(lastBackupAt);
   const [message, setMessage] = useState('');
+  const fileInput = useRef<HTMLInputElement>(null);
 
   const doExport = async () => {
     try {
@@ -41,49 +40,61 @@ export default function SettingsScreen() {
     }
   };
 
-  return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Settings</h1>
+  const overdue = backupOverdue();
 
-      <section className="flex flex-col gap-3 rounded-2xl bg-neutral-900 p-4">
-        <h2 className="font-semibold">Backup</h2>
-        <p className={`text-sm ${backupOverdue() ? 'text-amber-400' : 'text-neutral-400'}`}>
-          Last backup: {last ? new Date(last).toLocaleDateString('en-GB') : 'never'}
-          {backupOverdue() && ' — time to back up! Your data lives only on this phone.'}
-        </p>
-        <button className={btn.primary} onClick={doExport}>
-          Export database
-        </button>
-        <label className={`${btn.secondary} text-center`}>
-          Import database
-          <input
-            type="file"
-            className="hidden"
-            onChange={(e) => {
-              void doImport(e.target.files?.[0]);
-              e.target.value = '';
-            }}
+  return (
+    <div className="flex flex-col gap-5">
+      <PageHeader title="Settings" />
+
+      <section className="flex flex-col gap-2">
+        <SectionTitle>Backup</SectionTitle>
+        {overdue && (
+          <p className="flex items-start gap-2 rounded-2xl bg-amber-500/10 p-3 text-sm text-amber-300 ring-1 ring-amber-500/30">
+            <Icon name="warning" className="mt-0.5 h-4 w-4" />
+            Your data lives only on this phone. Export a backup regularly.
+          </p>
+        )}
+        <div className={`${card} divide-y divide-white/[0.06] overflow-hidden`}>
+          <Row icon="download" iconBg="bg-green-600" title="Export database" onClick={doExport} chevron />
+          <Row icon="upload" iconBg="bg-sky-600" title="Import database" onClick={() => fileInput.current?.click()} chevron />
+          <Row
+            icon="history"
+            iconBg="bg-neutral-600"
+            title="Last backup"
+            detail={
+              <span className={overdue ? 'text-amber-300' : ''}>
+                {last ? new Date(last).toLocaleDateString('en-GB') : 'Never'}
+              </span>
+            }
           />
-        </label>
-        {message && <p className="text-sm text-neutral-300">{message}</p>}
+        </div>
+        <input
+          ref={fileInput}
+          type="file"
+          className="hidden"
+          onChange={(e) => {
+            void doImport(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+        {message && <p className="px-1 text-sm text-neutral-300">{message}</p>}
       </section>
 
-      <section className="rounded-2xl bg-neutral-900 p-4">
-        <h2 className="mb-2 font-semibold">About</h2>
-        {info && (
-          <dl className="grid grid-cols-2 gap-y-1 text-sm">
-            <dt className="text-neutral-400">Persistent storage</dt>
-            <dd>{info.persisted ? 'Yes' : 'No'}</dd>
-            <dt className="text-neutral-400">Exercises</dt>
-            <dd>{info.exercises}</dd>
-            <dt className="text-neutral-400">App launches</dt>
-            <dd>{info.launches}</dd>
-            <dt className="text-neutral-400">Build</dt>
-            <dd>{new Date(__BUILD_TIME__).toLocaleString('en-GB')}</dd>
-          </dl>
-        )}
-        <p className="mt-3 text-xs text-neutral-500">
-          Exercise photos: free-exercise-db (public domain).
+      <section className="flex flex-col gap-2">
+        <SectionTitle>About</SectionTitle>
+        <div className={`${card} divide-y divide-white/[0.06] overflow-hidden`}>
+          <Row
+            icon="database"
+            iconBg="bg-violet-600"
+            title="Persistent storage"
+            detail={info ? (info.persisted ? 'Yes' : 'No') : ''}
+          />
+          <Row icon="dumbbell" iconBg="bg-orange-600" title="Exercises" detail={info ? String(info.exercises) : ''} />
+          <Row icon="play" iconBg="bg-neutral-600" title="App launches" detail={info?.launches ?? ''} />
+          <Row icon="settings" iconBg="bg-neutral-600" title="Build" detail={new Date(__BUILD_TIME__).toLocaleString('en-GB')} />
+        </div>
+        <p className="px-1 text-xs text-neutral-500">
+          Trust The Process · Exercise photos: free-exercise-db (public domain) · Icons: Material Symbols
         </p>
       </section>
     </div>

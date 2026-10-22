@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import Sheet, { btn, input } from '../../components/Sheet';
+import Icon from '../../components/Icon';
+import Sheet from '../../components/Sheet';
+import { btn, card, input, Stat } from '../../components/ui';
 import { prCountByWorkout } from '../../domain/progress';
 import { completeValues, formatWeight } from '../../domain/sets';
 import { formatDuration, summarize } from '../../domain/workout';
@@ -51,17 +53,20 @@ export default function FinishSheet({
   if (incomplete > 0) {
     return (
       <Sheet title="Unfinished sets" onClose={onClose}>
-        <p className="mb-4 text-neutral-400">
+        <p className="mb-4 flex items-center gap-2 text-neutral-400">
+          <Icon name="warning" className="h-5 w-5 text-amber-400" />
           {incomplete} set{incomplete === 1 ? ' is' : 's are'} not marked done.
         </p>
         <div className="flex flex-col gap-2 pb-2">
           {resolvable.length > 0 && (
             <button className={btn.primary} onClick={() => finalizeWorkout(workout.id, resolvable, {})}>
+              <Icon name="check" />
               Complete {resolvable.length === incomplete ? 'them' : `${resolvable.length} with values`}
             </button>
           )}
           {completed > 0 && (
             <button className={btn.secondary} onClick={() => finalizeWorkout(workout.id, [], {})}>
+              <Icon name="delete" className="h-5 w-5" />
               Discard incomplete sets
             </button>
           )}
@@ -87,11 +92,11 @@ export default function FinishSheet({
           onChange={(e) => setNotes(e.target.value)}
           placeholder="How did it go?"
         />
-        <div className="grid grid-cols-4 gap-2 text-center">
-          <Stat label="Duration" value={formatDuration(duration)} />
-          <Stat label="Volume" value={`${formatWeight(summary.volume)} kg`} />
-          <Stat label="Sets" value={String(summary.sets)} />
-          <Stat label="PRs" value={prs === undefined ? '…' : `🏆 ${prs}`} />
+        <div className={`${card} grid grid-cols-4 gap-1 p-3 text-center`}>
+          <Stat icon="clock" label="Time" value={formatDuration(duration)} />
+          <Stat icon="weight" label="Volume" value={`${formatWeight(summary.volume)} kg`} />
+          <Stat icon="sets" label="Sets" value={String(summary.sets)} />
+          <Stat icon="trophy" label="PRs" value={prs === undefined ? '…' : String(prs)} />
         </div>
         <button
           className={btn.primary}
@@ -104,18 +109,10 @@ export default function FinishSheet({
             onFinished();
           }}
         >
+          <Icon name="save" />
           Save workout
         </button>
       </div>
     </Sheet>
-  );
-}
-
-export function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-xs text-neutral-400">{label}</div>
-      <div className="font-semibold tabular-nums">{value}</div>
-    </div>
   );
 }

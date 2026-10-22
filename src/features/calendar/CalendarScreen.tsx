@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import Sheet, { btn } from '../../components/Sheet';
+import Icon from '../../components/Icon';
+import Sheet from '../../components/Sheet';
+import { btn, card, PageHeader, SectionTitle } from '../../components/ui';
 import { monthGrid, type DayStatus } from '../../domain/calendar';
 import { today, toLocalDate } from '../../domain/dates';
 import { SKIP_REASON_NAMES, type SkipReason } from '../../repositories/skips';
@@ -10,12 +12,12 @@ import SkipSheet from './SkipSheet';
 import { useDays, type DayInfo } from './useDays';
 
 export const STATUS_STYLE: Record<DayStatus, string> = {
-  done: 'bg-green-600 text-white',
-  extra: 'bg-green-600 text-white',
-  skipped: 'bg-amber-500/25 text-amber-300',
-  missed: 'bg-red-500/25 text-red-300',
-  planned: 'ring-1 ring-inset ring-green-600 text-neutral-100',
-  rest: 'text-neutral-400',
+  done: 'bg-green-500 text-neutral-950',
+  extra: 'bg-green-500/60 text-neutral-950',
+  skipped: 'bg-amber-500/20 text-amber-300',
+  missed: 'bg-red-500/20 text-red-300',
+  planned: 'ring-2 ring-inset ring-green-500/70 text-neutral-100',
+  rest: 'bg-neutral-800/50 text-neutral-400',
 };
 
 export const STATUS_NAME: Record<DayStatus, string> = {
@@ -24,8 +26,10 @@ export const STATUS_NAME: Record<DayStatus, string> = {
   skipped: 'Skipped',
   missed: 'Missed',
   planned: 'Planned',
-  rest: 'Rest',
+  rest: 'Rest day',
 };
+
+const LEGEND: DayStatus[] = ['done', 'extra', 'planned', 'skipped', 'missed'];
 
 export default function CalendarScreen() {
   const now = new Date();
@@ -40,7 +44,8 @@ export default function CalendarScreen() {
   const byDate = new Map(days?.map((d) => [d.date, d]));
   const t = today();
 
-  const shift = (n: number) => setMonth(({ y, m }) => ({ y: m + n < 0 ? y - 1 : m + n > 11 ? y + 1 : y, m: (m + n + 12) % 12 }));
+  const shift = (n: number) =>
+    setMonth(({ y, m }) => ({ y: m + n < 0 ? y - 1 : m + n > 11 ? y + 1 : y, m: (m + n + 12) % 12 }));
 
   const count = (...s: DayStatus[]) => days?.filter((d) => s.includes(d.status)).length ?? 0;
   const reasons = new Map<SkipReason, number>();
@@ -56,68 +61,81 @@ export default function CalendarScreen() {
         touchX.current = null;
       }}
     >
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Calendar</h1>
-        <Link to="/plan" className="text-green-500">
-          Weekly plan
-        </Link>
-      </div>
+      <PageHeader
+        title="Calendar"
+        action={
+          <Link to="/plan" className={`${btn.secondary} py-2 text-sm`}>
+            <Icon name="plan" className="h-[18px] w-[18px]" />
+            Weekly plan
+          </Link>
+        }
+      />
 
-      <div className="flex items-center justify-between">
-        <button className="px-3 py-1 text-2xl" onClick={() => shift(-1)} aria-label="Previous month">
-          ‹
-        </button>
-        <span className="font-semibold">
-          {new Date(month.y, month.m).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
-        </span>
-        <button className="px-3 py-1 text-2xl" onClick={() => shift(1)} aria-label="Next month">
-          ›
-        </button>
-      </div>
-
-      <div className="grid grid-cols-7 gap-1 text-center">
-        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
-          <span key={i} className="text-xs text-neutral-500">
-            {d}
+      <section className={`${card} p-3`}>
+        <div className="mb-3 flex items-center justify-between">
+          <button className={btn.icon} onClick={() => shift(-1)} aria-label="Previous month">
+            <Icon name="back" />
+          </button>
+          <span className="font-semibold">
+            {new Date(month.y, month.m).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
           </span>
-        ))}
-        {cells.map((date, i) => {
-          const d = date ? byDate.get(date) : undefined;
-          return date ? (
-            <button
-              key={date}
-              className={`relative aspect-square rounded-lg text-sm ${d ? STATUS_STYLE[d.status] : ''} ${
-                date === t ? 'font-bold outline-2 outline-white' : ''
-              }`}
-              onClick={() => setOpen(date)}
-            >
-              {Number(date.slice(8))}
-              {d?.status === 'extra' && <span className="absolute top-0.5 right-1 text-[10px]">+</span>}
-            </button>
-          ) : (
-            <span key={`pad${i}`} />
-          );
-        })}
-      </div>
-
-      <section className="rounded-2xl bg-neutral-900 p-4">
-        <h2 className="mb-2 font-semibold">This month</h2>
-        <div className="grid grid-cols-4 gap-2 text-center">
-          <Count label="Planned" value={days?.filter((d) => d.planned).length ?? 0} />
-          <Count label="Done" value={count('done', 'extra')} />
-          <Count label="Skipped" value={count('skipped')} />
-          <Count label="Missed" value={count('missed')} />
+          <button className={btn.icon} onClick={() => shift(1)} aria-label="Next month">
+            <Icon name="chevronRight" />
+          </button>
         </div>
-        {reasons.size > 0 && (
-          <ul className="mt-3 space-y-1 text-sm text-neutral-300">
-            {[...reasons].map(([r, n]) => (
-              <li key={r} className="flex justify-between">
-                <span>{SKIP_REASON_NAMES[r]}</span>
-                <span>{n}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="grid grid-cols-7 gap-1.5 text-center">
+          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+            <span key={i} className="pb-1 text-[11px] font-semibold text-neutral-500">
+              {d}
+            </span>
+          ))}
+          {cells.map((date, i) => {
+            const d = date ? byDate.get(date) : undefined;
+            return date ? (
+              <button
+                key={date}
+                className={`relative aspect-square rounded-xl text-sm font-medium ${d ? STATUS_STYLE[d.status] : ''} ${
+                  date === t ? 'font-bold outline-2 outline-offset-1 outline-white' : ''
+                }`}
+                onClick={() => setOpen(date)}
+              >
+                {Number(date.slice(8))}
+              </button>
+            ) : (
+              <span key={`pad${i}`} />
+            );
+          })}
+        </div>
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-neutral-400">
+          {LEGEND.map((s) => (
+            <span key={s} className="flex items-center gap-1">
+              <span className={`h-2.5 w-2.5 rounded-full ${STATUS_STYLE[s]}`} />
+              {STATUS_NAME[s]}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <SectionTitle>This month</SectionTitle>
+        <div className={`${card} p-4`}>
+          <div className="grid grid-cols-4 gap-2 text-center">
+            <Count label="Planned" value={days?.filter((d) => d.planned).length ?? 0} />
+            <Count label="Done" value={count('done', 'extra')} accent="text-green-500" />
+            <Count label="Skipped" value={count('skipped')} accent="text-amber-300" />
+            <Count label="Missed" value={count('missed')} accent="text-red-300" />
+          </div>
+          {reasons.size > 0 && (
+            <ul className="mt-4 flex flex-col gap-1.5 border-t border-white/[0.06] pt-3 text-sm text-neutral-300">
+              {[...reasons].map(([r, n]) => (
+                <li key={r} className="flex justify-between">
+                  <span>{SKIP_REASON_NAMES[r]}</span>
+                  <span className="text-neutral-400">{n}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </section>
 
       {open && byDate.get(open) && <DaySheet day={byDate.get(open)!} onClose={() => setOpen(null)} />}
@@ -125,10 +143,10 @@ export default function CalendarScreen() {
   );
 }
 
-function Count({ label, value }: { label: string; value: number }) {
+function Count({ label, value, accent = '' }: { label: string; value: number; accent?: string }) {
   return (
     <div>
-      <div className="text-xl font-bold">{value}</div>
+      <div className={`text-2xl font-bold ${accent}`}>{value}</div>
       <div className="text-xs text-neutral-400">{label}</div>
     </div>
   );
@@ -150,27 +168,33 @@ export function DaySheet({ day, onClose }: { day: DayInfo; onClose: () => void }
   return (
     <Sheet title={formatDate(day.date)} onClose={onClose}>
       <div className="flex flex-col gap-2 pb-2">
-        <p className="text-neutral-400">
+        <p className="flex items-center gap-2 text-neutral-400">
+          <span className={`h-2.5 w-2.5 rounded-full ${STATUS_STYLE[day.status]}`} />
           {STATUS_NAME[day.status]}
           {day.skip && ` · ${SKIP_REASON_NAMES[day.skip.reason]}${day.skip.note ? ` — ${day.skip.note}` : ''}`}
         </p>
         {day.workouts.map((w) => (
-          <Link key={w.id} to={`/history/${w.id}`} className={`${btn.secondary} text-left`}>
-            🏋 {w.title}
+          <Link key={w.id} to={`/history/${w.id}`} className={`${btn.secondary} justify-start`}>
+            <Icon name="dumbbell" className="h-5 w-5 text-green-500" />
+            <span className="flex-1 text-left">{w.title}</span>
+            <Icon name="chevronRight" className="h-5 w-5 text-neutral-500" />
           </Link>
         ))}
         {day.workouts.length === 0 && (
-          <button className={`${btn.secondary} text-left`} onClick={() => setSkipping(true)}>
+          <button className={`${btn.secondary} justify-start`} onClick={() => setSkipping(true)}>
+            <Icon name="skipDay" className="h-5 w-5 text-amber-300" />
             {day.skip ? 'Edit skip reason' : 'Mark as skipped'}
           </button>
         )}
         {day.date < t && (
-          <button className={`${btn.secondary} text-left`} onClick={logPast}>
-            + Log a workout for this day
+          <button className={`${btn.secondary} justify-start`} onClick={logPast}>
+            <Icon name="add" className="h-5 w-5 text-green-500" />
+            Log a workout for this day
           </button>
         )}
         {day.date === t && (
-          <Link to="/" className={`${btn.secondary} text-left`}>
+          <Link to="/" className={`${btn.secondary} justify-start`}>
+            <Icon name="play" className="h-5 w-5 text-green-500" />
             Go to Today to start a workout
           </Link>
         )}

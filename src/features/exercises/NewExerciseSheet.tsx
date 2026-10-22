@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import ExerciseThumb from '../../components/ExerciseThumb';
-import Sheet, { btn, input } from '../../components/Sheet';
-import { photoToDataUrl } from './photo';
+import Icon from '../../components/Icon';
+import Sheet from '../../components/Sheet';
+import { btn, input, SectionTitle, Toggle } from '../../components/ui';
 import {
   createExercise,
   EQUIPMENT,
@@ -10,6 +11,7 @@ import {
   type Equipment,
   type MuscleGroup,
 } from '../../repositories/exercises';
+import { photoToDataUrl } from './photo';
 
 export default function NewExerciseSheet({
   onClose,
@@ -21,12 +23,13 @@ export default function NewExerciseSheet({
   const [name, setName] = useState('');
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>('chest');
   const [equipment, setEquipment] = useState<Equipment>('barbell');
+  const [hasGrip, setHasGrip] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const save = async () => {
     try {
-      const id = await createExercise({ name, muscleGroup, equipment, image });
+      const id = await createExercise({ name, muscleGroup, equipment, image, hasGrip });
       onCreated?.(id);
       onClose();
     } catch (e) {
@@ -42,8 +45,9 @@ export default function NewExerciseSheet({
             {image ? (
               <ExerciseThumb image={image} muscleGroup={muscleGroup} size={56} />
             ) : (
-              <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-neutral-800 text-xs text-neutral-400">
-                + Photo
+              <span className="flex h-14 w-14 flex-col items-center justify-center rounded-xl bg-neutral-800 text-[10px] text-neutral-400">
+                <Icon name="camera" className="h-6 w-6" />
+                Photo
               </span>
             )}
             <input
@@ -58,8 +62,8 @@ export default function NewExerciseSheet({
           </label>
           <input className={input} placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
-        <div>
-          <p className="mb-2 text-sm text-neutral-400">Muscle group</p>
+        <div className="flex flex-col gap-2">
+          <SectionTitle>Muscle group</SectionTitle>
           <div className="flex flex-wrap gap-2">
             {MUSCLE_GROUPS.map((m) => (
               <button key={m} className={btn.chip(m === muscleGroup)} onClick={() => setMuscleGroup(m)}>
@@ -68,8 +72,8 @@ export default function NewExerciseSheet({
             ))}
           </div>
         </div>
-        <div>
-          <p className="mb-2 text-sm text-neutral-400">Equipment</p>
+        <div className="flex flex-col gap-2">
+          <SectionTitle>Equipment</SectionTitle>
           <div className="flex flex-wrap gap-2">
             {EQUIPMENT.map((m) => (
               <button key={m} className={btn.chip(m === equipment)} onClick={() => setEquipment(m)}>
@@ -78,8 +82,17 @@ export default function NewExerciseSheet({
             ))}
           </div>
         </div>
+        <div className="flex items-center gap-3 rounded-xl bg-neutral-800/60 px-3 py-2.5">
+          <Icon name="grip" className="h-5 w-5 text-neutral-400" />
+          <span className="flex-1 text-sm">
+            Grip selector
+            <span className="block text-xs text-neutral-500">Wide / normal / narrow / parallel</span>
+          </span>
+          <Toggle on={hasGrip} onChange={setHasGrip} label="Grip selector" />
+        </div>
         {error && <p className="text-sm text-red-400">{error}</p>}
         <button className={btn.primary} disabled={!name.trim()} onClick={save}>
+          <Icon name="save" />
           Save
         </button>
       </div>

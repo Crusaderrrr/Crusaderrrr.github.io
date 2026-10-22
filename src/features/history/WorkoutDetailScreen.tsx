@@ -1,11 +1,12 @@
 import { Link, Navigate, useNavigate, useParams } from 'react-router';
-import { btn } from '../../components/Sheet';
+import ExerciseThumb from '../../components/ExerciseThumb';
+import Icon from '../../components/Icon';
+import { BackButton, btn, card, Stat } from '../../components/ui';
 import { formatWeight, setLabels } from '../../domain/sets';
 import { formatDuration, summarize } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
+import { GRIP_NAMES } from '../../repositories/exercises';
 import { deleteWorkout, getWorkout } from '../../repositories/workouts';
-import ExerciseThumb from '../../components/ExerciseThumb';
-import { Stat } from '../workout/FinishSheet';
 import { SET_TYPE_COLOR } from '../workout/SetRow';
 import WorkoutEditor from '../workout/WorkoutEditor';
 import { formatDate } from './HistoryScreen';
@@ -25,34 +26,36 @@ export function WorkoutDetailScreen() {
   const summary = summarize(w.exercises.flatMap((e) => e.sets));
 
   return (
-    <div className="flex flex-col gap-3 pb-6">
-      <button className="self-start text-green-500" onClick={() => navigate(-1)}>
-        ‹ Back
-      </button>
+    <div className="flex flex-col gap-4">
+      <BackButton />
       <div>
-        <h1 className="text-2xl font-bold">{w.title}</h1>
-        <p className="text-neutral-400">{formatDate(w.date)}</p>
+        <p className="text-sm font-medium text-green-500">{formatDate(w.date)}</p>
+        <h1 className="text-[28px] leading-tight font-bold tracking-tight">{w.title}</h1>
       </div>
-      <div className="grid grid-cols-3 gap-2 rounded-2xl bg-neutral-900 p-3 text-center">
-        <Stat label="Duration" value={formatDuration((Date.parse(w.finishedAt) - Date.parse(w.startedAt)) / 1000)} />
-        <Stat label="Volume" value={`${formatWeight(summary.volume)} kg`} />
-        <Stat label="Sets" value={String(summary.sets)} />
+      <div className={`${card} grid grid-cols-3 gap-2 p-3 text-center`}>
+        <Stat icon="clock" label="Duration" value={formatDuration((Date.parse(w.finishedAt) - Date.parse(w.startedAt)) / 1000)} />
+        <Stat icon="weight" label="Volume" value={`${formatWeight(summary.volume)} kg`} />
+        <Stat icon="sets" label="Sets" value={String(summary.sets)} />
       </div>
-      {w.notes && <p className="whitespace-pre-wrap text-neutral-300">{w.notes}</p>}
+      {w.notes && <p className="px-1 whitespace-pre-wrap text-neutral-300">{w.notes}</p>}
 
       {w.exercises.map((we) => {
         const labels = setLabels(we.sets.map((s) => s.setType));
         return (
-          <section key={we.id} className="rounded-2xl bg-neutral-900 p-3">
-            <Link to={`/exercises/${we.exerciseId}`} className="flex items-center gap-3 font-semibold text-green-500">
+          <section key={we.id} className={`${card} p-3`}>
+            <Link to={`/exercises/${we.exerciseId}`} className="flex items-center gap-3">
               <ExerciseThumb image={we.image} muscleGroup={we.muscleGroup} />
-              {we.name}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-semibold text-green-500">{we.name}</span>
+                {we.grip && <span className="text-sm text-neutral-400">{GRIP_NAMES[we.grip]} grip</span>}
+              </span>
+              <Icon name="chevronRight" className="h-5 w-5 text-neutral-600" />
             </Link>
-            <ul className="mt-2 space-y-1">
+            <ul className="mt-3 flex flex-col gap-1">
               {we.sets.map((s, i) => (
-                <li key={s.id} className="flex gap-3 text-sm">
-                  <span className={`w-6 text-center font-semibold ${SET_TYPE_COLOR[s.setType]}`}>{labels[i]}</span>
-                  <span>
+                <li key={s.id} className="flex items-center gap-3 rounded-lg bg-neutral-800/50 px-3 py-1.5 text-sm">
+                  <span className={`w-5 text-center font-bold ${SET_TYPE_COLOR[s.setType]}`}>{labels[i]}</span>
+                  <span className="tabular-nums">
                     {s.weightKg ? `${formatWeight(s.weightKg)} kg × ${s.reps}` : `${s.reps} reps`}
                   </span>
                 </li>
@@ -62,19 +65,23 @@ export function WorkoutDetailScreen() {
         );
       })}
 
-      <Link to={`/history/${w.id}/edit`} className={`${btn.secondary} text-center`}>
-        Edit workout
-      </Link>
-      <button
-        className={btn.danger}
-        onClick={async () => {
-          if (!confirm('Delete this workout? This cannot be undone.')) return;
-          await deleteWorkout(w.id);
-          navigate('/history', { replace: true });
-        }}
-      >
-        Delete workout
-      </button>
+      <div className="grid grid-cols-2 gap-2">
+        <Link to={`/history/${w.id}/edit`} className={btn.secondary}>
+          <Icon name="edit" className="h-5 w-5" />
+          Edit
+        </Link>
+        <button
+          className={btn.danger}
+          onClick={async () => {
+            if (!confirm('Delete this workout? This cannot be undone.')) return;
+            await deleteWorkout(w.id);
+            navigate('/history', { replace: true });
+          }}
+        >
+          <Icon name="delete" className="h-5 w-5" />
+          Delete
+        </button>
+      </div>
     </div>
   );
 }

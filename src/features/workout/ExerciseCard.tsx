@@ -1,22 +1,25 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
-import Sheet, { btn } from '../../components/Sheet';
 import ExerciseThumb from '../../components/ExerciseThumb';
+import Icon, { type IconName } from '../../components/Icon';
+import Sheet from '../../components/Sheet';
+import { btn, card } from '../../components/ui';
 import { completeValues, SET_TYPE_NAMES, SET_TYPES, setLabels, type SetType } from '../../domain/sets';
 import { formatClock } from '../../domain/workout';
-import { setRestSeconds } from '../../repositories/exercises';
+import { GRIP_NAMES, GRIPS, setRestSeconds } from '../../repositories/exercises';
 import {
   addSet,
   completeSet,
   deleteSet,
   removeWorkoutExercise,
+  setGrip,
   setSetType,
   uncompleteSet,
   type WorkoutExercise,
   type WorkoutSet,
 } from '../../repositories/workouts';
 import { unlockAudio } from './beep';
-import SetRow, { SET_TYPE_COLOR } from './SetRow';
+import SetRow, { SET_GRID, SET_TYPE_COLOR } from './SetRow';
 
 const SET_TYPE_LETTER: Record<SetType, string> = { normal: '1', warmup: 'W', drop: 'D', failure: 'F' };
 
@@ -37,12 +40,12 @@ export default function ExerciseCard({
   onMove?: (dir: -1 | 1) => void;
   onReplace: () => void;
 }) {
-  const [menu, setMenu] = useState(false);
-  const [restMenu, setRestMenu] = useState(false);
+  const [sheet, setSheet] = useState<'menu' | 'rest' | 'grip' | null>(null);
   const [typeFor, setTypeFor] = useState<WorkoutSet | null>(null);
   const [shaking, setShaking] = useState<number | null>(null);
 
   const labels = setLabels(we.sets.map((s) => s.setType));
+  const close = () => setSheet(null);
 
   const toggle = (set: WorkoutSet, i: number) => {
     if (set.completed) return void uncompleteSet(set.id);
@@ -57,28 +60,40 @@ export default function ExerciseCard({
   };
 
   return (
-    <section className="rounded-2xl bg-neutral-900 p-3">
+    <section className={`${card} p-3`}>
       <div className="flex items-center gap-3">
-        <ExerciseThumb image={we.image} muscleGroup={we.muscleGroup} />
-        <Link to={`/exercises/${we.exerciseId}`} className="min-w-0 flex-1 truncate font-semibold text-green-500">
+        <ExerciseThumb image={we.image} muscleGroup={we.muscleGroup} size={48} />
+        <Link to={`/exercises/${we.exerciseId}`} className="min-w-0 flex-1 truncate text-[17px] font-semibold text-green-500">
           {we.name}
         </Link>
-        <button className="px-2 text-xl text-neutral-400" onClick={() => setMenu(true)} aria-label="Exercise menu">
-          ⋯
+        <button className={btn.icon} onClick={() => setSheet('menu')} aria-label="Exercise menu">
+          <Icon name="more" />
         </button>
       </div>
-      {withRest && (
-        <button className="mt-1 text-sm text-sky-400" onClick={() => setRestMenu(true)}>
-          ⏱ Rest timer: {restLabel(we.restSeconds)}
-        </button>
+
+      {(withRest || we.grip) && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {we.grip && (
+            <Pill icon="grip" onClick={() => setSheet('grip')}>
+              {GRIP_NAMES[we.grip]} grip
+            </Pill>
+          )}
+          {withRest && (
+            <Pill icon="timer" onClick={() => setSheet('rest')}>
+              Rest {restLabel(we.restSeconds)}
+            </Pill>
+          )}
+        </div>
       )}
 
-      <div className="mt-2 grid grid-cols-[2.5rem_1fr_4.5rem_4rem_2.75rem] gap-2 text-center text-xs font-semibold text-neutral-500">
+      <div className={`${SET_GRID} mt-3 text-center text-[11px] font-semibold tracking-wide text-neutral-500`}>
         <span>SET</span>
         <span>PREVIOUS</span>
         <span>KG</span>
         <span>REPS</span>
-        <span>✓</span>
+        <span className="flex justify-center">
+          <Icon name="check" className="h-4 w-4" />
+        </span>
       </div>
       {we.sets.map((s, i) => (
         <SetRow
@@ -91,8 +106,9 @@ export default function ExerciseCard({
           onToggle={() => toggle(s, i)}
         />
       ))}
-      <button className={`${btn.secondary} mt-2 w-full py-2`} onClick={() => addSet(we)}>
-        + Add set
+      <button className={`${btn.secondary} mt-2 w-full py-2.5`} onClick={() => addSet(we)}>
+        <Icon name="add" className="h-5 w-5" />
+        Add set
       </button>
 
       {typeFor && (
@@ -102,9 +118,7 @@ export default function ExerciseCard({
               <button
                 key={t}
                 // ring-inset: an outer ring gets clipped by the sheet's scroll container
-                className={`${btn.secondary} flex items-center gap-3 text-left ${
-                  t === typeFor.setType ? 'ring-2 ring-green-600 ring-inset' : ''
-                }`}
+                className={`${btn.secondary} justify-start ${t === typeFor.setType ? 'ring-2 ring-green-500 ring-inset' : ''}`}
                 onClick={() => {
                   void setSetType(typeFor.id, t);
                   setTypeFor(null);
@@ -115,28 +129,49 @@ export default function ExerciseCard({
               </button>
             ))}
             <button
-              className={`${btn.danger} text-left`}
+              className={`${btn.danger} justify-start`}
               onClick={() => {
                 void deleteSet(typeFor.id);
                 setTypeFor(null);
               }}
             >
+              <Icon name="delete" className="h-5 w-5" />
               Delete set
             </button>
           </div>
         </Sheet>
       )}
 
-      {restMenu && (
-        <Sheet title={`Rest timer · ${we.name}`} onClose={() => setRestMenu(false)}>
+      {sheet === 'grip' && (
+        <Sheet title="Grip" onClose={close}>
+          <div className="flex flex-col gap-2 pb-2">
+            {GRIPS.map((g) => (
+              <button
+                key={g}
+                className={`${btn.secondary} justify-between ${g === we.grip ? 'ring-2 ring-green-500 ring-inset' : ''}`}
+                onClick={() => {
+                  void setGrip(we.id, g);
+                  close();
+                }}
+              >
+                {GRIP_NAMES[g]}
+                {g === we.grip && <Icon name="check" className="h-5 w-5 text-green-500" />}
+              </button>
+            ))}
+          </div>
+        </Sheet>
+      )}
+
+      {sheet === 'rest' && (
+        <Sheet title={`Rest timer · ${we.name}`} onClose={close}>
           <div className="grid grid-cols-3 gap-2 pb-2">
             {REST_OPTIONS.map((s) => (
               <button
                 key={s}
-                className={btn.chip(s === we.restSeconds) + ' py-3 text-base'}
+                className={`${btn.chip(s === we.restSeconds)} py-3 text-base`}
                 onClick={() => {
                   void setRestSeconds(we.exerciseId, s);
-                  setRestMenu(false);
+                  close();
                 }}
               >
                 {restLabel(s)}
@@ -146,34 +181,57 @@ export default function ExerciseCard({
         </Sheet>
       )}
 
-      {menu && (
-        <Sheet title={we.name} onClose={() => setMenu(false)}>
+      {sheet === 'menu' && (
+        <Sheet title={we.name} onClose={close}>
           <div className="flex flex-col gap-2 pb-2">
-            <button className={`${btn.secondary} text-left`} onClick={() => (setMenu(false), onReplace())}>
+            <MenuItem icon="swap" onClick={() => (close(), onReplace())}>
               Replace exercise
-            </button>
+            </MenuItem>
             {onMove && (
               <>
-                <button className={`${btn.secondary} text-left`} onClick={() => (setMenu(false), onMove(-1))}>
+                <MenuItem icon="arrowUp" onClick={() => (close(), onMove(-1))}>
                   Move up
-                </button>
-                <button className={`${btn.secondary} text-left`} onClick={() => (setMenu(false), onMove(1))}>
+                </MenuItem>
+                <MenuItem icon="arrowDown" onClick={() => (close(), onMove(1))}>
                   Move down
-                </button>
+                </MenuItem>
               </>
             )}
             <button
-              className={`${btn.danger} text-left`}
+              className={`${btn.danger} justify-start`}
               onClick={() => {
-                setMenu(false);
+                close();
                 void removeWorkoutExercise(we.id);
               }}
             >
+              <Icon name="delete" className="h-5 w-5" />
               Remove exercise
             </button>
           </div>
         </Sheet>
       )}
     </section>
+  );
+}
+
+function Pill({ icon, onClick, children }: { icon: IconName; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      className="inline-flex items-center gap-1.5 rounded-full bg-neutral-800 px-3 py-1 text-sm text-neutral-200 active:bg-neutral-700"
+      onClick={onClick}
+    >
+      <Icon name={icon} className="h-4 w-4 text-green-500" />
+      {children}
+      <Icon name="chevronDown" className="h-4 w-4 text-neutral-500" />
+    </button>
+  );
+}
+
+function MenuItem({ icon, onClick, children }: { icon: IconName; onClick: () => void; children: ReactNode }) {
+  return (
+    <button className={`${btn.secondary} justify-start`} onClick={onClick}>
+      <Icon name={icon} className="h-5 w-5 text-neutral-400" />
+      {children}
+    </button>
   );
 }

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import Icon from '../../components/Icon';
+import { btn, PageHeader } from '../../components/ui';
 import ExerciseList from './ExerciseList';
 import NewExerciseSheet from './NewExerciseSheet';
 
@@ -9,16 +11,23 @@ export default function ExercisesScreen() {
   const [archived, setArchived] = useState(false);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{archived ? 'Archived' : 'Exercises'}</h1>
-        <button className="text-green-500" onClick={() => setCreating(true)}>
-          + New
-        </button>
-      </div>
-      <ExerciseList archived={archived} onPick={(e) => navigate(`/exercises/${e.id}`)} />
-      <button className="py-4 text-sm text-neutral-500" onClick={() => setArchived(!archived)}>
-        {archived ? '← Back to exercises' : 'Show archived exercises'}
+    <div className="flex flex-col gap-4">
+      <PageHeader
+        title={archived ? 'Archived' : 'Exercises'}
+        action={
+          <button className={`${btn.secondary} py-2 text-sm`} onClick={() => setCreating(true)}>
+            <Icon name="add" className="h-5 w-5" />
+            New
+          </button>
+        }
+      />
+      <ExerciseList archived={archived} chevron onPick={(e) => navigate(`/exercises/${e.id}`)} />
+      <button
+        className="inline-flex items-center justify-center gap-2 py-3 text-sm text-neutral-500"
+        onClick={() => setArchived(!archived)}
+      >
+        <Icon name={archived ? 'back' : 'archive'} className="h-4 w-4" />
+        {archived ? 'Back to exercises' : 'Show archived exercises'}
       </button>
       {creating && <NewExerciseSheet onClose={() => setCreating(false)} />}
     </div>

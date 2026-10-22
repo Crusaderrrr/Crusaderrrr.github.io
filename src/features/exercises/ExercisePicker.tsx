@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import Sheet, { btn } from '../../components/Sheet';
+import Icon from '../../components/Icon';
+import Sheet from '../../components/Sheet';
+import { btn } from '../../components/ui';
 import ExerciseList from './ExerciseList';
 import NewExerciseSheet from './NewExerciseSheet';
 
@@ -23,13 +25,15 @@ export default function ExercisePicker({
 
   return (
     <Sheet title={single ? 'Replace exercise' : 'Add exercises'} onClose={onClose} full>
-      <button className="mb-3 self-start text-sm text-green-500" onClick={() => setCreating(true)}>
-        + New exercise
+      <button className="mb-3 inline-flex items-center gap-1 self-start text-sm font-medium text-green-500" onClick={() => setCreating(true)}>
+        <Icon name="add" className="h-5 w-5" />
+        New exercise
       </button>
       <ExerciseList selected={new Set(selected)} onPick={(e) => toggle(e.id)} />
       {!single && (
         <div className="sticky bottom-0 bg-neutral-900 pt-3">
           <button className={`${btn.primary} w-full`} disabled={!selected.length} onClick={() => onDone(selected)}>
+            <Icon name="add" />
             Add {selected.length || ''} exercise{selected.length === 1 ? '' : 's'}
           </button>
         </div>

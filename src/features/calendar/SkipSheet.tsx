@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import Sheet, { btn, input } from '../../components/Sheet';
+import Sheet from '../../components/Sheet';
+import { btn, input } from '../../components/ui';
 import { removeSkip, saveSkip, SKIP_REASON_NAMES, SKIP_REASONS, type Skip, type SkipReason } from '../../repositories/skips';
 import { formatDate } from '../history/HistoryScreen';
 
