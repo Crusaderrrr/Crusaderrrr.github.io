@@ -2,6 +2,7 @@ import { batch, query, type Statement } from '../db/client';
 import { parseLocalDate, today } from '../domain/dates';
 import { nextSetValues, type SetType, type SetValues } from '../domain/sets';
 import { defaultTitle } from '../domain/workout';
+import type { MuscleGroup } from './exercises';
 
 export type Workout = {
   id: number;
@@ -26,6 +27,7 @@ export type WorkoutExercise = {
   id: number;
   exerciseId: number;
   name: string;
+  muscleGroup: MuscleGroup;
   restSeconds: number;
   position: number;
   sets: WorkoutSet[];
@@ -48,7 +50,8 @@ export async function getWorkout(id: number): Promise<WorkoutDetail | null> {
   if (!w) return null;
 
   const exercises = await query<Omit<WorkoutExercise, 'sets' | 'previous'>>(
-    `SELECT we.id, we.exercise_id AS exerciseId, e.name, e.rest_seconds AS restSeconds, we.position
+    `SELECT we.id, we.exercise_id AS exerciseId, e.name, e.muscle_group AS muscleGroup,
+            e.rest_seconds AS restSeconds, we.position
      FROM workout_exercise we JOIN exercise e ON e.id = we.exercise_id
      WHERE we.workout_id = ? ORDER BY we.position, we.id`,
     [id],

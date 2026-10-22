@@ -6,7 +6,8 @@ import { addDays, parseLocalDate, today } from '../../domain/dates';
 import { personalRecords, sessionStats, type SessionStats } from '../../domain/progress';
 import { formatWeight, setLabels } from '../../domain/sets';
 import { useDbQuery } from '../../hooks/useDbQuery';
-import { getExercise, label, removeExercise, unarchiveExercise } from '../../repositories/exercises';
+import MuscleIcon from '../../components/MuscleIcon';
+import { getExercise, label, removeExercise, setFavorite, unarchiveExercise } from '../../repositories/exercises';
 import { sessionsByExercise } from '../../repositories/progress';
 import { formatDate } from '../history/HistoryScreen';
 
@@ -49,12 +50,22 @@ export default function ExerciseProgressScreen() {
       <button className="self-start text-green-500" onClick={() => navigate(-1)}>
         ‹ Back
       </button>
-      <div>
-        <h1 className="text-2xl font-bold">{exercise.name}</h1>
-        <p className="text-neutral-400">
-          {label(exercise.muscleGroup)} · {label(exercise.equipment)}
-          {exercise.archived ? ' · Archived' : ''}
-        </p>
+      <div className="flex items-center gap-3">
+        <MuscleIcon group={exercise.muscleGroup} size={56} />
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-bold">{exercise.name}</h1>
+          <p className="text-neutral-400">
+            {label(exercise.muscleGroup)} · {label(exercise.equipment)}
+            {exercise.archived ? ' · Archived' : ''}
+          </p>
+        </div>
+        <button
+          className={`text-3xl ${exercise.favorite ? 'text-yellow-400' : 'text-neutral-600'}`}
+          onClick={() => setFavorite(id, !exercise.favorite)}
+          aria-label={exercise.favorite ? 'Remove from favourites' : 'Add to favourites'}
+        >
+          {exercise.favorite ? '★' : '☆'}
+        </button>
       </div>
 
       <div className="grid grid-cols-3 gap-2">

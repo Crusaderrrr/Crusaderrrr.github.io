@@ -73,4 +73,6 @@ export const migrations: string[] = [
 
   ${seedSql}
   `,
+  // 2: favourites (Exercises tab section)
+  `ALTER TABLE exercise ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0;`,
 ];

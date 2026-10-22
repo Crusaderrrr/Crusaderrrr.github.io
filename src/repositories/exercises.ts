@@ -25,10 +25,11 @@ export type Exercise = {
   isCustom: number;
   archived: number;
   restSeconds: number;
+  favorite: number;
 };
 
 const COLS = `id, name, muscle_group AS muscleGroup, equipment, is_custom AS isCustom, archived,
-              rest_seconds AS restSeconds`;
+              rest_seconds AS restSeconds, favorite`;
 
 export function listExercises(archived = false): Promise<Exercise[]> {
   return query<Exercise>(`SELECT ${COLS} FROM exercise WHERE archived = ? ORDER BY name`, [archived ? 1 : 0]);
@@ -68,6 +69,10 @@ export async function removeExercise(id: number): Promise<'deleted' | 'archived'
 
 export function unarchiveExercise(id: number) {
   return query('UPDATE exercise SET archived = 0 WHERE id = ?', [id]);
+}
+
+export function setFavorite(id: number, favorite: boolean) {
+  return query('UPDATE exercise SET favorite = ? WHERE id = ?', [favorite ? 1 : 0, id]);
 }
 
 export function setRestSeconds(id: number, seconds: number) {

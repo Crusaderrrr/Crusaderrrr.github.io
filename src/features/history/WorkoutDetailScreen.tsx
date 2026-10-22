@@ -4,7 +4,9 @@ import { formatWeight, setLabels } from '../../domain/sets';
 import { formatDuration, summarize } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
 import { deleteWorkout, getWorkout } from '../../repositories/workouts';
+import MuscleIcon from '../../components/MuscleIcon';
 import { Stat } from '../workout/FinishSheet';
+import { SET_TYPE_COLOR } from '../workout/SetRow';
 import WorkoutEditor from '../workout/WorkoutEditor';
 import { formatDate } from './HistoryScreen';
 
@@ -42,13 +44,14 @@ export function WorkoutDetailScreen() {
         const labels = setLabels(we.sets.map((s) => s.setType));
         return (
           <section key={we.id} className="rounded-2xl bg-neutral-900 p-3">
-            <Link to={`/exercises/${we.exerciseId}`} className="font-semibold text-green-500">
+            <Link to={`/exercises/${we.exerciseId}`} className="flex items-center gap-3 font-semibold text-green-500">
+              <MuscleIcon group={we.muscleGroup} />
               {we.name}
             </Link>
             <ul className="mt-2 space-y-1">
               {we.sets.map((s, i) => (
                 <li key={s.id} className="flex gap-3 text-sm">
-                  <span className="w-6 text-center font-semibold text-neutral-400">{labels[i]}</span>
+                  <span className={`w-6 text-center font-semibold ${SET_TYPE_COLOR[s.setType]}`}>{labels[i]}</span>
                   <span>
                     {s.weightKg ? `${formatWeight(s.weightKg)} kg × ${s.reps}` : `${s.reps} reps`}
                   </span>
