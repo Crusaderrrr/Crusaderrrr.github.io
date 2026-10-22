@@ -17,6 +17,13 @@ export function formatClock(totalSeconds: number): string {
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
 }
 
+/** Rest timer choices (seconds); 0 = off. */
+export const REST_OPTIONS = [0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300];
+
+export function formatRest(seconds: number): string {
+  return seconds === 0 ? 'Off' : formatClock(seconds);
+}
+
 /** Compact duration for cards: "45m", "1h 5m". */
 export function formatDuration(totalSeconds: number): string {
   const m = Math.max(0, Math.round(totalSeconds / 60));

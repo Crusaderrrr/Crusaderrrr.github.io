@@ -5,8 +5,15 @@ import Icon, { type IconName } from '../../components/Icon';
 import Sheet from '../../components/Sheet';
 import { btn, card } from '../../components/ui';
 import { completeValues, SET_TYPE_NAMES, SET_TYPES, setLabels, type SetType } from '../../domain/sets';
-import { formatClock } from '../../domain/workout';
-import { GRIP_NAMES, GRIPS, setRestSeconds } from '../../repositories/exercises';
+import { formatRest, REST_OPTIONS } from '../../domain/workout';
+import { useDbQuery } from '../../hooks/useDbQuery';
+import {
+  getDefaultRest,
+  GRIP_NAMES,
+  GRIPS,
+  resetRestSeconds,
+  setRestSeconds,
+} from '../../repositories/exercises';
 import {
   addSet,
   completeSet,
@@ -22,9 +29,6 @@ import { unlockAudio } from './beep';
 import SetRow, { SET_GRID, SET_TYPE_COLOR } from './SetRow';
 
 const SET_TYPE_LETTER: Record<SetType, string> = { normal: '1', warmup: 'W', drop: 'D', failure: 'F' };
-
-const REST_OPTIONS = [0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300];
-const restLabel = (s: number) => (s === 0 ? 'Off' : formatClock(s));
 
 export default function ExerciseCard({
   we,
@@ -80,7 +84,7 @@ export default function ExerciseCard({
           )}
           {withRest && (
             <Pill icon="timer" onClick={() => setSheet('rest')}>
-              Rest {restLabel(we.restSeconds)}
+              Rest {formatRest(we.restSeconds)}
             </Pill>
           )}
         </div>
@@ -162,24 +166,7 @@ export default function ExerciseCard({
         </Sheet>
       )}
 
-      {sheet === 'rest' && (
-        <Sheet title={`Rest timer · ${we.name}`} onClose={close}>
-          <div className="grid grid-cols-3 gap-2 pb-2">
-            {REST_OPTIONS.map((s) => (
-              <button
-                key={s}
-                className={`${btn.chip(s === we.restSeconds)} py-3 text-base`}
-                onClick={() => {
-                  void setRestSeconds(we.exerciseId, s);
-                  close();
-                }}
-              >
-                {restLabel(s)}
-              </button>
-            ))}
-          </div>
-        </Sheet>
-      )}
+      {sheet === 'rest' && <RestSheet we={we} onClose={close} />}
 
       {sheet === 'menu' && (
         <Sheet title={we.name} onClose={close}>
@@ -233,5 +220,41 @@ function MenuItem({ icon, onClick, children }: { icon: IconName; onClick: () => 
       <Icon name={icon} className="h-5 w-5 text-neutral-400" />
       {children}
     </button>
+  );
+}
+
+/** Per-exercise rest: a fixed value (kept for this exercise) or "use default" from Settings. */
+function RestSheet({ we, onClose }: { we: WorkoutExercise; onClose: () => void }) {
+  const defaultRest = useDbQuery(getDefaultRest, []);
+  const pick = (seconds: number) => {
+    void setRestSeconds(we.exerciseId, seconds);
+    onClose();
+  };
+  return (
+    <Sheet title={`Rest timer · ${we.name}`} onClose={onClose}>
+      <div className="flex flex-col gap-3 pb-2">
+        <button
+          className={`${btn.secondary} justify-between ${!we.restCustom ? 'ring-2 ring-green-500 ring-inset' : ''}`}
+          onClick={() => {
+            void resetRestSeconds(we.exerciseId);
+            onClose();
+          }}
+        >
+          <span>Use default{defaultRest !== undefined && ` (${formatRest(defaultRest)})`}</span>
+          {!we.restCustom && <Icon name="check" className="h-5 w-5 text-green-500" />}
+        </button>
+        <div className="grid grid-cols-3 gap-2">
+          {REST_OPTIONS.map((s) => (
+            <button
+              key={s}
+              className={`${btn.chip(!!we.restCustom && s === we.restSeconds)} py-3 text-base`}
+              onClick={() => pick(s)}
+            >
+              {formatRest(s)}
+            </button>
+          ))}
+        </div>
+      </div>
+    </Sheet>
   );
 }

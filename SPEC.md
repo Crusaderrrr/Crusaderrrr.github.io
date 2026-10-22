@@ -124,6 +124,9 @@ CREATE TABLE exercise (
 -- ('wide','normal','narrow','parallel_wide','parallel_normal'). New grip exercises default to
 -- the grip used last time; "Previous" matches the same grip (falls back to grip-less history);
 -- History shows the grip and Progress can filter by it.
+-- Migration 5: exercise.rest_custom + meta 'default_rest_seconds' (Settings → Default rest
+-- timer). Changing the default rewrites rest_seconds of every rest_custom = 0 exercise; setting
+-- rest in a workout sets rest_custom = 1; "Use default" in the workout's rest menu resets it.
 -- Seed exercises get public-domain photos from free-exercise-db, bundled in public/exercises/
 -- (precached, so they work offline). Users can set their own photo (resized to 480px, stored in
 -- the DB so backups include it). No image → muscle-group icon (inline SVG).

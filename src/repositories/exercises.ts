@@ -1,4 +1,4 @@
-import { query } from '../db/client';
+import { batch, query } from '../db/client';
 
 export const MUSCLE_GROUPS = [
   'chest',
@@ -45,6 +45,8 @@ export type Exercise = {
 const COLS = `id, name, muscle_group AS muscleGroup, equipment, is_custom AS isCustom, archived,
               rest_seconds AS restSeconds, favorite, image, has_grip AS hasGrip`;
 
+const DEFAULT_REST_SQL = `(SELECT CAST(value AS INTEGER) FROM meta WHERE key = 'default_rest_seconds')`;
+
 export function listExercises(archived = false): Promise<Exercise[]> {
   return query<Exercise>(`SELECT ${COLS} FROM exercise WHERE archived = ? ORDER BY name`, [archived ? 1 : 0]);
 }
@@ -65,8 +67,8 @@ export async function createExercise(e: {
   const [dup] = await query('SELECT 1 FROM exercise WHERE name = ?', [name]);
   if (dup) throw new Error(`"${name}" already exists (it may be archived).`);
   const [row] = await query<{ id: number }>(
-    `INSERT INTO exercise (name, muscle_group, equipment, is_custom, image, has_grip)
-     VALUES (?, ?, ?, 1, ?, ?) RETURNING id`,
+    `INSERT INTO exercise (name, muscle_group, equipment, is_custom, image, has_grip, rest_seconds)
+     VALUES (?, ?, ?, 1, ?, ?, COALESCE(${DEFAULT_REST_SQL}, 120)) RETURNING id`,
     [name, e.muscleGroup, e.equipment, e.image, e.hasGrip ? 1 : 0],
   );
   return row!.id;
@@ -100,6 +102,29 @@ export function setFavorite(id: number, favorite: boolean) {
   return query('UPDATE exercise SET favorite = ? WHERE id = ?', [favorite ? 1 : 0, id]);
 }
 
+/** Rest chosen in a workout: this exercise keeps it, whatever the default becomes. */
 export function setRestSeconds(id: number, seconds: number) {
-  return query('UPDATE exercise SET rest_seconds = ? WHERE id = ?', [seconds, id]);
+  return query('UPDATE exercise SET rest_seconds = ?, rest_custom = 1 WHERE id = ?', [seconds, id]);
+}
+
+/** Makes the exercise follow the default rest timer again. */
+export function resetRestSeconds(id: number) {
+  return query(`UPDATE exercise SET rest_seconds = ${DEFAULT_REST_SQL}, rest_custom = 0 WHERE id = ?`, [id]);
+}
+
+export async function getDefaultRest(): Promise<number> {
+  const [row] = await query<{ value: string }>(`SELECT value FROM meta WHERE key = 'default_rest_seconds'`);
+  return Number(row?.value ?? 120);
+}
+
+/** Saves the default and applies it to every exercise whose rest wasn't set in a workout. */
+export function setDefaultRest(seconds: number) {
+  return batch([
+    {
+      sql: `INSERT INTO meta (key, value) VALUES ('default_rest_seconds', ?)
+            ON CONFLICT (key) DO UPDATE SET value = excluded.value`,
+      bind: [String(seconds)],
+    },
+    { sql: 'UPDATE exercise SET rest_seconds = ? WHERE rest_custom = 0', bind: [seconds] },
+  ]);
 }

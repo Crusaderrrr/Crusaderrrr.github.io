@@ -75,6 +75,10 @@ Live URL: https://crusaderrrr.github.io/
 - [x] UI redesign: Material Symbols (filled) icons everywhere, cards, page headers, grouped
       Settings rows, Today week strip + last workout, floating rest bar, area chart with metric tabs
 
+## Feedback round 4 (2026-10-22) ✅
+- [x] Settings → Default rest timer, applied to every exercise not customised in a workout
+      (migration 5); workout rest menu gains "Use default"
+
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
 - Rest-timer beep on iOS (Web Audio is muted while the ringer switch is on silent).

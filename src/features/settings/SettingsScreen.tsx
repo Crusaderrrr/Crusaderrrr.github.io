@@ -1,7 +1,10 @@
 import { useRef, useState } from 'react';
 import Icon from '../../components/Icon';
-import { card, PageHeader, Row, SectionTitle } from '../../components/ui';
+import Sheet from '../../components/Sheet';
+import { btn, card, PageHeader, Row, SectionTitle } from '../../components/ui';
+import { formatRest, REST_OPTIONS } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
+import { getDefaultRest, setDefaultRest } from '../../repositories/exercises';
 import { countExercises, getMeta } from '../../repositories/meta';
 import { backupOverdue, exportBackup, importBackup, lastBackupAt } from './backup';
 
@@ -17,6 +20,8 @@ export default function SettingsScreen() {
   const [last, setLast] = useState(lastBackupAt);
   const [message, setMessage] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
+  const defaultRest = useDbQuery(getDefaultRest, []);
+  const [restSheet, setRestSheet] = useState(false);
 
   const doExport = async () => {
     try {
@@ -45,6 +50,23 @@ export default function SettingsScreen() {
   return (
     <div className="flex flex-col gap-5">
       <PageHeader title="Settings" />
+
+      <section className="flex flex-col gap-2">
+        <SectionTitle>Workout</SectionTitle>
+        <div className={`${card} overflow-hidden`}>
+          <Row
+            icon="timer"
+            iconBg="bg-green-600"
+            title="Default rest timer"
+            detail={defaultRest === undefined ? '' : formatRest(defaultRest)}
+            onClick={() => setRestSheet(true)}
+            chevron
+          />
+        </div>
+        <p className="px-1 text-xs text-neutral-500">
+          Used by every exercise unless you set its rest timer during a workout.
+        </p>
+      </section>
 
       <section className="flex flex-col gap-2">
         <SectionTitle>Backup</SectionTitle>
@@ -97,6 +119,25 @@ export default function SettingsScreen() {
           Trust The Process · Exercise photos: free-exercise-db (public domain) · Icons: Material Symbols
         </p>
       </section>
+
+      {restSheet && (
+        <Sheet title="Default rest timer" onClose={() => setRestSheet(false)}>
+          <div className="grid grid-cols-3 gap-2 pb-2">
+            {REST_OPTIONS.map((s) => (
+              <button
+                key={s}
+                className={`${btn.chip(s === defaultRest)} py-3 text-base`}
+                onClick={async () => {
+                  await setDefaultRest(s);
+                  setRestSheet(false);
+                }}
+              >
+                {formatRest(s)}
+              </button>
+            ))}
+          </div>
+        </Sheet>
+      )}
     </div>
   );
 }

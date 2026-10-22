@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultTitle, formatClock, formatDuration, summarize } from './workout';
+import { defaultTitle, formatClock, formatDuration, formatRest, summarize } from './workout';
 
 describe('workout', () => {
   it('names workouts by time of day', () => {
@@ -15,6 +15,8 @@ describe('workout', () => {
     expect(formatClock(-3)).toBe('0:00');
     expect(formatDuration(45 * 60)).toBe('45m');
     expect(formatDuration(65 * 60)).toBe('1h 5m');
+    expect(formatRest(0)).toBe('Off');
+    expect(formatRest(90)).toBe('1:30');
   });
 
   it('summarizes completed sets, excluding warm-ups from volume', () => {

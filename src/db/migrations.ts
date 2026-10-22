@@ -88,4 +88,10 @@ export const migrations: string[] = [
     ('Lat Pulldown', 'Seated Cable Row', 'T-Bar Row', 'Pull-Up');
   ALTER TABLE workout_exercise ADD COLUMN grip TEXT
     CHECK (grip IN ('wide', 'normal', 'narrow', 'parallel_wide', 'parallel_normal'));`,
+  // 5: default rest timer (Settings). rest_custom = 1 once an exercise's rest was set in a
+  // workout; only non-custom exercises follow the default. Anything already changed from the
+  // old built-in 120 s counts as custom.
+  `ALTER TABLE exercise ADD COLUMN rest_custom INTEGER NOT NULL DEFAULT 0;
+  UPDATE exercise SET rest_custom = 1 WHERE rest_seconds <> 120;
+  INSERT INTO meta (key, value) VALUES ('default_rest_seconds', '120') ON CONFLICT DO NOTHING;`,
 ];
