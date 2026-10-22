@@ -14,7 +14,7 @@ Legend: ⬜ not started · 🟡 in progress · ✅ verified on iPhone
 
 ## Phase 0 — Skeleton + persistence gate 🟡 (built, awaiting iPhone check)
 - [x] GitHub repo connected (`Crusaderrrr/Crusaderrrr.github.io`)
-- [ ] Repo Settings → Pages → Source = GitHub Actions (owner)
+- [x] Repo Settings → Pages → Source = GitHub Actions; custom domain removed
 - [x] Vite + React + TS strict + Tailwind, dark default
 - [x] HashRouter, bottom tab bar (Today · History · Calendar · Exercises · Settings), empty screens
 - [x] DB worker (`opfs-sahpool`, pool `ttp`) + RPC client + migration 1 (schema + seed + `meta`)
