@@ -2,7 +2,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router';
 import ExerciseThumb from '../../components/ExerciseThumb';
 import Icon from '../../components/Icon';
 import { BackButton, btn, card, Stat } from '../../components/ui';
-import { formatWeight, setLabels } from '../../domain/sets';
+import { formatSet, formatWeight, setLabels } from '../../domain/sets';
 import { formatDuration, summarize } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
 import { GRIP_NAMES } from '../../repositories/exercises';
@@ -55,9 +55,7 @@ export function WorkoutDetailScreen() {
               {we.sets.map((s, i) => (
                 <li key={s.id} className="flex items-center gap-3 rounded-lg bg-neutral-800/50 px-3 py-1.5 text-sm">
                   <span className={`w-5 text-center font-bold ${SET_TYPE_COLOR[s.setType]}`}>{labels[i]}</span>
-                  <span className="tabular-nums">
-                    {s.weightKg ? `${formatWeight(s.weightKg)} kg × ${s.reps}` : `${s.reps} reps`}
-                  </span>
+                  <span className="tabular-nums">{formatSet(s, !!we.isCardio)}</span>
                 </li>
               ))}
             </ul>

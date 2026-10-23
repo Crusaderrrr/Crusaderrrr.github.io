@@ -79,6 +79,9 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Settings → Default rest timer, applied to every exercise not customised in a workout
       (migration 5); workout rest menu gains "Use default"
 
+## Feedback round 5 (2026-10-23) ✅
+- [x] Treadmill exercise: time / speed / incline sets instead of kg / reps (migration 6)
+
 ## Planned, not started
 - Self-hosted full-stack, multi-user version — see `MIGRATION.md` (decisions recorded 2026-10-22).
 
@@ -93,3 +96,4 @@ Live URL: https://crusaderrrr.github.io/
 - 2026-10-22 — Phase 0 implemented and confirmed on iPhone.
 - 2026-10-22 — Phases 1–6 implemented. E2E in Chrome (390×844): logging, reload mid-workout,
   finish flow, PRs, history edit, calendar/plan/skip, charts, export → delete → import restore.
+- 2026-10-23 — Treadmill (cardio sets) added; E2E in Chrome: log, finish, history, Previous.

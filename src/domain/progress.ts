@@ -1,6 +1,6 @@
-import type { SetType } from './sets';
+import type { SetType, SetValues } from './sets';
 
-export type ProgressSet = { weightKg: number; reps: number; setType: SetType };
+export type ProgressSet = SetValues & { weightKg: number; reps: number; setType: SetType };
 /** One exercise's completed sets in one finished workout. */
 export type Session = { workoutId: number; date: string; sets: ProgressSet[] };
 export type SessionStats = {

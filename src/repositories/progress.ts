@@ -10,6 +10,8 @@ type Row = {
   grip: Grip | null;
   weightKg: number;
   reps: number;
+  speedKmh: number | null;
+  inclinePct: number | null;
   setType: SetType;
 };
 
@@ -26,7 +28,7 @@ export async function sessionsByExercise(opts: {
 } = {}): Promise<Map<number, GripSession[]>> {
   const rows = await query<Row>(
     `SELECT we.exercise_id AS exerciseId, w.id AS workoutId, w.date, we.grip, s.weight_kg AS weightKg,
-            s.reps, s.set_type AS setType
+            s.reps, s.speed_kmh AS speedKmh, s.incline_pct AS inclinePct, s.set_type AS setType
      FROM workout_set s
      JOIN workout_exercise we ON we.id = s.workout_exercise_id
      JOIN workout w ON w.id = we.workout_id
@@ -43,7 +45,8 @@ export async function sessionsByExercise(opts: {
       last = { workoutId: r.workoutId, date: r.date, grip: r.grip, sets: [] };
       sessions.push(last);
     }
-    last.sets.push({ weightKg: r.weightKg, reps: r.reps, setType: r.setType });
+    const { weightKg, reps, speedKmh, inclinePct, setType } = r;
+    last.sets.push({ weightKg, reps, speedKmh, inclinePct, setType });
     byExercise.set(r.exerciseId, sessions);
   }
   return byExercise;

@@ -1,6 +1,6 @@
 import { batch, query, type Statement } from '../db/client';
 import { parseLocalDate, today } from '../domain/dates';
-import { nextSetValues, type SetType, type SetValues } from '../domain/sets';
+import { nextSetValues, type CompletedValues, type SetType, type SetValues } from '../domain/sets';
 import { defaultTitle } from '../domain/workout';
 import type { Grip, MuscleGroup } from './exercises';
 
@@ -20,6 +20,8 @@ export type WorkoutSet = {
   setType: SetType;
   weightKg: number | null;
   reps: number | null;
+  speedKmh: number | null;
+  inclinePct: number | null;
   completed: number;
 };
 
@@ -33,6 +35,8 @@ export type WorkoutExercise = {
   /** 1 = rest set in a workout; 0 = follows the default from Settings. */
   restCustom: number;
   hasGrip: number;
+  /** Treadmill-style: sets log time / speed / incline instead of kg / reps. */
+  isCardio: number;
   grip: Grip | null;
   position: number;
   sets: WorkoutSet[];
@@ -56,21 +60,22 @@ export async function getWorkout(id: number): Promise<WorkoutDetail | null> {
 
   const exercises = await query<Omit<WorkoutExercise, 'sets' | 'previous'>>(
     `SELECT we.id, we.exercise_id AS exerciseId, e.name, e.muscle_group AS muscleGroup, e.image,
-            e.rest_seconds AS restSeconds, e.rest_custom AS restCustom, e.has_grip AS hasGrip, we.grip, we.position
+            e.rest_seconds AS restSeconds, e.rest_custom AS restCustom, e.has_grip AS hasGrip,
+            e.is_cardio AS isCardio, we.grip, we.position
      FROM workout_exercise we JOIN exercise e ON e.id = we.exercise_id
      WHERE we.workout_id = ? ORDER BY we.position, we.id`,
     [id],
   );
   const sets = await query<WorkoutSet & { weId: number }>(
     `SELECT s.id, s.workout_exercise_id AS weId, s.position, s.set_type AS setType,
-            s.weight_kg AS weightKg, s.reps, s.completed
+            s.weight_kg AS weightKg, s.reps, s.speed_kmh AS speedKmh, s.incline_pct AS inclinePct, s.completed
      FROM workout_set s JOIN workout_exercise we ON we.id = s.workout_exercise_id
      WHERE we.workout_id = ? ORDER BY s.position, s.id`,
     [id],
   );
   // For each (exercise, grip) in this workout: the matching workout_exercise from the latest
   // earlier finished workout. Same grip wins; history logged without a grip is the fallback.
-  const previous = await query<{ exerciseId: number; grip: Grip | null; weightKg: number; reps: number }>(
+  const previous = await query<SetValues & { exerciseId: number; grip: Grip | null }>(
     `WITH x AS (SELECT DISTINCT exercise_id, grip FROM workout_exercise WHERE workout_id = ?1),
      pick AS (
        SELECT x.exercise_id AS exerciseId, x.grip,
@@ -81,7 +86,8 @@ export async function getWorkout(id: number): Promise<WorkoutDetail | null> {
           ORDER BY (we2.grip IS x.grip) DESC, w2.date DESC, w2.started_at DESC, we2.position
           LIMIT 1) AS weId
        FROM x)
-     SELECT pick.exerciseId, pick.grip, s.weight_kg AS weightKg, s.reps
+     SELECT pick.exerciseId, pick.grip, s.weight_kg AS weightKg, s.reps, s.speed_kmh AS speedKmh,
+            s.incline_pct AS inclinePct
      FROM pick JOIN workout_set s ON s.workout_exercise_id = pick.weId
      WHERE s.completed = 1 ORDER BY s.position, s.id`,
     [id, w.date, w.startedAt],
@@ -198,22 +204,32 @@ export function swapExercises(a: { id: number; position: number }, b: { id: numb
 export function addSet(we: WorkoutExercise) {
   const v = nextSetValues(we.sets);
   const position = (we.sets.at(-1)?.position ?? -1) + 1;
-  return query('INSERT INTO workout_set (workout_exercise_id, position, weight_kg, reps) VALUES (?, ?, ?, ?)', [
-    we.id,
-    position,
-    v.weightKg,
-    v.reps,
-  ]);
-}
-
-/** Clearing a field of a completed set also un-completes it (completed sets need both values). */
-export function updateSetValue(id: number, field: 'weight_kg' | 'reps', value: number | null) {
   return query(
-    `UPDATE workout_set SET ${field} = ?1, completed = CASE WHEN ?1 IS NULL THEN 0 ELSE completed END
-     WHERE id = ?2`,
-    [value, id],
+    `INSERT INTO workout_set (workout_exercise_id, position, weight_kg, reps, speed_kmh, incline_pct)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [we.id, position, v.weightKg, v.reps, v.speedKmh ?? null, v.inclinePct ?? null],
   );
 }
+
+export type SetField = 'weight_kg' | 'reps' | 'speed_kmh' | 'incline_pct';
+
+/**
+ * Clearing weight or reps of a completed set also un-completes it (completed sets need both);
+ * speed and incline are optional.
+ */
+export function updateSetValue(id: number, field: SetField, value: number | null) {
+  const required = field === 'weight_kg' || field === 'reps';
+  return query(
+    `UPDATE workout_set SET ${field} = ?1,
+       completed = CASE WHEN ?1 IS NULL AND ?3 THEN 0 ELSE completed END
+     WHERE id = ?2`,
+    [value, id, required ? 1 : 0],
+  );
+}
+
+const COMPLETE_SQL =
+  'UPDATE workout_set SET weight_kg = ?, reps = ?, speed_kmh = ?, incline_pct = ?, completed = 1 WHERE id = ?';
+const completeBind = (id: number, v: CompletedValues) => [v.weightKg, v.reps, v.speedKmh, v.inclinePct, id];
 
 export function setSetType(id: number, type: SetType) {
   return query('UPDATE workout_set SET set_type = ? WHERE id = ?', [type, id]);
@@ -226,15 +242,10 @@ export function deleteSet(id: number) {
 /** Marks a set done with final values and (optionally) starts the rest timer. */
 export function completeSet(
   setId: number,
-  values: { weightKg: number; reps: number },
+  values: CompletedValues,
   rest?: { workoutId: number; seconds: number },
 ) {
-  const statements: Statement[] = [
-    {
-      sql: 'UPDATE workout_set SET weight_kg = ?, reps = ?, completed = 1 WHERE id = ?',
-      bind: [values.weightKg, values.reps, setId],
-    },
-  ];
+  const statements: Statement[] = [{ sql: COMPLETE_SQL, bind: completeBind(setId, values) }];
   if (rest && rest.seconds > 0) {
     const endsAt = new Date(Date.now() + rest.seconds * 1000).toISOString();
     statements.push({ sql: 'UPDATE workout SET rest_ends_at = ? WHERE id = ?', bind: [endsAt, rest.workoutId] });
@@ -252,13 +263,10 @@ export function uncompleteSet(id: number) {
  */
 export function finalizeWorkout(
   workoutId: number,
-  complete: { id: number; weightKg: number; reps: number }[],
+  complete: (CompletedValues & { id: number })[],
   fields: { title?: string; notes?: string | null; finishedAt?: string },
 ) {
-  const statements: Statement[] = complete.map((s) => ({
-    sql: 'UPDATE workout_set SET weight_kg = ?, reps = ?, completed = 1 WHERE id = ?',
-    bind: [s.weightKg, s.reps, s.id],
-  }));
+  const statements: Statement[] = complete.map((s) => ({ sql: COMPLETE_SQL, bind: completeBind(s.id, s) }));
   statements.push(
     {
       sql: `DELETE FROM workout_set WHERE completed = 0 AND workout_exercise_id IN

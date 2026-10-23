@@ -40,10 +40,13 @@ export type Exercise = {
   image: string | null;
   /** Offers the grip selector when logged (lat pulldown, rows…). */
   hasGrip: number;
+  /** Logs time / speed / incline instead of kg / reps (treadmill). */
+  isCardio: number;
 };
 
 const COLS = `id, name, muscle_group AS muscleGroup, equipment, is_custom AS isCustom, archived,
-              rest_seconds AS restSeconds, favorite, image, has_grip AS hasGrip`;
+              rest_seconds AS restSeconds, favorite, image, has_grip AS hasGrip,
+              is_cardio AS isCardio`;
 
 const DEFAULT_REST_SQL = `(SELECT CAST(value AS INTEGER) FROM meta WHERE key = 'default_rest_seconds')`;
 

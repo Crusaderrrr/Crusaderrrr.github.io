@@ -127,6 +127,11 @@ CREATE TABLE exercise (
 -- Migration 5: exercise.rest_custom + meta 'default_rest_seconds' (Settings → Default rest
 -- timer). Changing the default rewrites rest_seconds of every rest_custom = 0 exercise; setting
 -- rest in a workout sets rest_custom = 1; "Use default" in the workout's rest menu resets it.
+-- Migration 6: exercise.is_cardio + workout_set.speed_kmh / incline_pct (both optional), and a
+-- seeded "Treadmill" (full_body · machine, rest off). Cardio sets log TIME · KM/H · INCLINE %
+-- instead of kg / reps: time is stored as seconds in `reps`, `weight_kg` = 0 (keeps the
+-- completed-set CHECK; no volume, no PRs). Time input: "25" = 25 min, "25:30" / "25.30" =
+-- 25 min 30 s. Previous values show as placeholders (no Previous column — no room).
 -- Seed exercises get public-domain photos from free-exercise-db, bundled in public/exercises/
 -- (precached, so they work offline). Users can set their own photo (resized to 480px, stored in
 -- the DB so backups include it). No image → muscle-group icon (inline SVG).
@@ -459,6 +464,7 @@ month summary, log a workout for a past date. Unit tests for `calendar.ts`.
 | Cable Crunch | core | cable |
 | Ab Wheel Rollout | core | other |
 | Kettlebell Swing | full_body | kettlebell |
+| Treadmill (cardio, migration 6) | full_body | machine |
 
 Seed rows use the default `rest_seconds` (120).
 Plank is time-based; in v1 log it with `reps` = seconds and `weight_kg` = 0. Proper

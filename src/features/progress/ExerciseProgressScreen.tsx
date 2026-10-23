@@ -6,7 +6,7 @@ import MuscleIcon from '../../components/MuscleIcon';
 import { BackButton, btn, card, Row, SectionTitle, Toggle } from '../../components/ui';
 import { addDays, parseLocalDate, today } from '../../domain/dates';
 import { personalRecords, sessionStats, type SessionStats } from '../../domain/progress';
-import { formatWeight, setLabels } from '../../domain/sets';
+import { formatSet, formatWeight, setLabels } from '../../domain/sets';
 import { useDbQuery } from '../../hooks/useDbQuery';
 import {
   getExercise,
@@ -107,40 +107,45 @@ export default function ExerciseProgressScreen() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
-        <PrCard title="Heaviest" value={pr.topWeight && `${formatWeight(pr.topWeight.value)} kg`} date={pr.topWeight?.date} />
-        <PrCard title="Best e1RM" value={pr.e1rm && `${formatWeight(Math.round(pr.e1rm.value * 10) / 10)} kg`} date={pr.e1rm?.date} />
-        <PrCard title="Best volume" value={pr.volume && `${formatWeight(pr.volume.value)} kg`} date={pr.volume?.date} />
-      </div>
-
-      <section className={`${card} flex flex-col gap-3 p-3`}>
-        <div className="flex gap-1 rounded-xl bg-neutral-800/60 p-1">
-          {(Object.keys(METRICS) as Metric[]).map((m) => (
-            <button
-              key={m}
-              className={`flex-1 rounded-lg py-1.5 text-sm font-medium ${m === metric ? 'bg-neutral-700 text-white' : 'text-neutral-400'}`}
-              onClick={() => setMetric(m)}
-            >
-              {METRICS[m]}
-            </button>
-          ))}
-        </div>
-        {shown.length === 0 ? (
-          <div className="flex h-44 flex-col items-center justify-center gap-2 text-sm text-neutral-500">
-            <Icon name="trending" className="h-8 w-8 text-neutral-700" />
-            No sessions in this range yet
+      {/* kg PRs and charts mean nothing for cardio; its sessions list below is the history. */}
+      {!exercise.isCardio && (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            <PrCard title="Heaviest" value={pr.topWeight && `${formatWeight(pr.topWeight.value)} kg`} date={pr.topWeight?.date} />
+            <PrCard title="Best e1RM" value={pr.e1rm && `${formatWeight(Math.round(pr.e1rm.value * 10) / 10)} kg`} date={pr.e1rm?.date} />
+            <PrCard title="Best volume" value={pr.volume && `${formatWeight(pr.volume.value)} kg`} date={pr.volume?.date} />
           </div>
-        ) : (
-          <Chart data={shown} metric={metric} />
-        )}
-        <div className="flex justify-center gap-2">
-          {(Object.keys(RANGES) as Range[]).map((r) => (
-            <button key={r} className={btn.chip(r === range)} onClick={() => setRange(r)}>
-              {r}
-            </button>
-          ))}
-        </div>
-      </section>
+
+          <section className={`${card} flex flex-col gap-3 p-3`}>
+            <div className="flex gap-1 rounded-xl bg-neutral-800/60 p-1">
+              {(Object.keys(METRICS) as Metric[]).map((m) => (
+                <button
+                  key={m}
+                  className={`flex-1 rounded-lg py-1.5 text-sm font-medium ${m === metric ? 'bg-neutral-700 text-white' : 'text-neutral-400'}`}
+                  onClick={() => setMetric(m)}
+                >
+                  {METRICS[m]}
+                </button>
+              ))}
+            </div>
+            {shown.length === 0 ? (
+              <div className="flex h-44 flex-col items-center justify-center gap-2 text-sm text-neutral-500">
+                <Icon name="trending" className="h-8 w-8 text-neutral-700" />
+                No sessions in this range yet
+              </div>
+            ) : (
+              <Chart data={shown} metric={metric} />
+            )}
+            <div className="flex justify-center gap-2">
+              {(Object.keys(RANGES) as Range[]).map((r) => (
+                <button key={r} className={btn.chip(r === range)} onClick={() => setRange(r)}>
+                  {r}
+                </button>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
 
       {sessions.length > 0 && (
         <section className="flex flex-col gap-2">
@@ -166,7 +171,7 @@ export default function ExerciseProgressScreen() {
                   {s.sets.map((x, i) => (
                     <span key={i} className="rounded-md bg-neutral-800/70 px-2 py-0.5 tabular-nums">
                       <span className={`font-bold ${SET_TYPE_COLOR[x.setType]}`}>{labels[i]}</span>{' '}
-                      {x.weightKg ? `${formatWeight(x.weightKg)}×${x.reps}` : `${x.reps} reps`}
+                      {formatSet(x, !!exercise.isCardio)}
                     </span>
                   ))}
                 </div>
@@ -195,9 +200,11 @@ export default function ExerciseProgressScreen() {
           {exercise.image && (
             <Row icon="image" iconBg="bg-neutral-600" title="Remove photo" onClick={() => setExerciseImage(id, null)} />
           )}
-          <Row icon="grip" iconBg="bg-violet-600" title="Grip selector">
-            <Toggle on={!!exercise.hasGrip} onChange={(v) => setHasGrip(id, v)} label="Grip selector" />
-          </Row>
+          {!exercise.isCardio && (
+            <Row icon="grip" iconBg="bg-violet-600" title="Grip selector">
+              <Toggle on={!!exercise.hasGrip} onChange={(v) => setHasGrip(id, v)} label="Grip selector" />
+            </Row>
+          )}
           {exercise.archived ? (
             <Row icon="unarchive" iconBg="bg-green-600" title="Unarchive exercise" onClick={() => unarchiveExercise(id)} />
           ) : (

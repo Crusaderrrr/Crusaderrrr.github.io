@@ -94,4 +94,12 @@ export const migrations: string[] = [
   `ALTER TABLE exercise ADD COLUMN rest_custom INTEGER NOT NULL DEFAULT 0;
   UPDATE exercise SET rest_custom = 1 WHERE rest_seconds <> 120;
   INSERT INTO meta (key, value) VALUES ('default_rest_seconds', '120') ON CONFLICT DO NOTHING;`,
+  // 6: cardio exercises (Treadmill). Their sets store time in seconds in reps and 0 in
+  // weight_kg (keeps the completed-set CHECK without a table rebuild), plus optional speed
+  // and incline. Rest timer off by default. An existing custom "Treadmill" is left as it is.
+  `ALTER TABLE exercise ADD COLUMN is_cardio INTEGER NOT NULL DEFAULT 0;
+  ALTER TABLE workout_set ADD COLUMN speed_kmh REAL CHECK (speed_kmh >= 0);
+  ALTER TABLE workout_set ADD COLUMN incline_pct REAL CHECK (incline_pct >= 0);
+  INSERT INTO exercise (name, muscle_group, equipment, is_cardio, rest_seconds, rest_custom)
+    VALUES ('Treadmill', 'full_body', 'machine', 1, 0, 1) ON CONFLICT DO NOTHING;`,
 ];

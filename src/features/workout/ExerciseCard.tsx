@@ -26,7 +26,7 @@ import {
   type WorkoutSet,
 } from '../../repositories/workouts';
 import { unlockAudio } from './beep';
-import SetRow, { SET_GRID, SET_TYPE_COLOR } from './SetRow';
+import SetRow, { CARDIO_GRID, SET_GRID, SET_TYPE_COLOR } from './SetRow';
 
 const SET_TYPE_LETTER: Record<SetType, string> = { normal: '1', warmup: 'W', drop: 'D', failure: 'F' };
 
@@ -90,11 +90,21 @@ export default function ExerciseCard({
         </div>
       )}
 
-      <div className={`${SET_GRID} mt-3 text-center text-[11px] font-semibold tracking-wide text-neutral-500`}>
+      <div className={`${we.isCardio ? CARDIO_GRID : SET_GRID} mt-3 text-center text-[11px] font-semibold tracking-wide text-neutral-500`}>
         <span>SET</span>
-        <span>PREVIOUS</span>
-        <span>KG</span>
-        <span>REPS</span>
+        {we.isCardio ? (
+          <>
+            <span>TIME</span>
+            <span>KM/H</span>
+            <span>INCLINE %</span>
+          </>
+        ) : (
+          <>
+            <span>PREVIOUS</span>
+            <span>KG</span>
+            <span>REPS</span>
+          </>
+        )}
         <span className="flex justify-center">
           <Icon name="check" className="h-4 w-4" />
         </span>
@@ -105,6 +115,7 @@ export default function ExerciseCard({
           set={s}
           label={labels[i]!}
           previous={we.previous[i]}
+          cardio={!!we.isCardio}
           shaking={shaking === s.id}
           onLabel={() => setTypeFor(s)}
           onToggle={() => toggle(s, i)}
