@@ -4,8 +4,8 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import Icon from '../../components/Icon';
 import MuscleIcon from '../../components/MuscleIcon';
 import { BackButton, btn, card, Row, SectionTitle, Toggle } from '../../components/ui';
-import { addDays, parseLocalDate, today } from '../../domain/dates';
-import { personalRecords, sessionStats, type SessionStats } from '../../domain/progress';
+import { parseLocalDate, today } from '../../domain/dates';
+import { personalRecords, RANGES, rangeStart, sessionStats, type Range, type SessionStats } from '../../domain/progress';
 import { formatSet, formatWeight, setLabels } from '../../domain/sets';
 import { useDbQuery } from '../../hooks/useDbQuery';
 import {
@@ -24,9 +24,6 @@ import { sessionsByExercise } from '../../repositories/progress';
 import { photoToDataUrl } from '../exercises/photo';
 import { formatDate } from '../history/HistoryScreen';
 import { SET_TYPE_COLOR } from '../workout/SetRow';
-
-const RANGES = { '1M': 30, '3M': 91, '1Y': 365, All: null } as const;
-type Range = keyof typeof RANGES;
 
 const METRICS = {
   topWeight: 'Top weight',
@@ -56,8 +53,7 @@ export default function ExerciseProgressScreen() {
   const usedGrips = GRIPS.filter((g) => allSessions.some((s) => s.grip === g));
   const sessions = grip === 'all' ? allSessions : allSessions.filter((s) => s.grip === grip);
   const stats = sessions.map(sessionStats).filter((s): s is SessionStats => s !== null);
-  const days = RANGES[range];
-  const from = days === null ? '' : addDays(today(), -days);
+  const from = rangeStart(range, today());
   const shown = stats.filter((s) => s.date >= from);
   const pr = personalRecords(stats);
 

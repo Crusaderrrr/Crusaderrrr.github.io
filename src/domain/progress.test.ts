@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { e1rm, personalRecords, prCountByWorkout, sessionStats, type Session } from './progress';
+import { e1rm, personalRecords, prCountByWorkout, rangeStart, sessionStats, tonnage, type Session } from './progress';
 
 const session = (workoutId: number, date: string, sets: [number, number, string?][]): Session => ({
   workoutId,
@@ -55,5 +55,33 @@ describe('progress', () => {
     expect(counts.get(1)).toBeUndefined();
     expect(counts.get(2)).toBe(3);
     expect(counts.get(3)).toBe(2); // squat e1RM + volume
+  });
+});
+
+describe('tonnage', () => {
+  // 2026-10-19 is a Monday, 2026-10-25 the Sunday of that week.
+  const ws = [
+    { date: '2026-10-25', volume: 300 },
+    { date: '2026-10-19', volume: 100 },
+    { date: '2026-10-26', volume: 50 },
+    { date: '2026-01-01', volume: 999 },
+  ];
+
+  it('sums per ISO week keyed by Monday, chronological, ignoring older workouts', () => {
+    expect(tonnage(ws, 'week', '2026-09-01')).toEqual([
+      { date: '2026-10-19', volume: 400 },
+      { date: '2026-10-26', volume: 50 },
+    ]);
+  });
+
+  it('lists each workout day on its own', () => {
+    expect(tonnage(ws, 'workout', '2026-10-20')).toEqual([
+      { date: '2026-10-25', volume: 300 },
+      { date: '2026-10-26', volume: 50 },
+    ]);
+  });
+
+  it('computes range starts', () => {
+    expect(rangeStart('1M', '2026-10-24')).toBe('2026-09-24');
   });
 });

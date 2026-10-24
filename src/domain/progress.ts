@@ -1,3 +1,4 @@
+import { addDays, isoWeekday } from './dates';
 import type { SetType, SetValues } from './sets';
 
 export type ProgressSet = SetValues & { weightKg: number; reps: number; setType: SetType };
@@ -72,4 +73,25 @@ export function prCountByWorkout(sessionsPerExercise: Session[][]): Map<number, 
     }
   }
   return counts;
+}
+
+/** Chart time ranges, in days back from today. */
+export const RANGES = { '1M': 30, '3M': 91, '1Y': 365, '3Y': 1095 } as const;
+export type Range = keyof typeof RANGES;
+
+export const rangeStart = (range: Range, today: string) => addDays(today, -RANGES[range]);
+
+/** Total tonnage per workout or per ISO week (keyed by its Monday), chronological, from `from` on. */
+export function tonnage(
+  workouts: { date: string; volume: number }[],
+  by: 'workout' | 'week',
+  from: string,
+): { date: string; volume: number }[] {
+  const out = new Map<string, number>();
+  for (const w of workouts) {
+    if (w.date < from) continue;
+    const key = by === 'week' ? addDays(w.date, 1 - isoWeekday(w.date)) : w.date;
+    out.set(key, (out.get(key) ?? 0) + w.volume);
+  }
+  return [...out].sort(([a], [b]) => (a < b ? -1 : 1)).map(([date, volume]) => ({ date, volume }));
 }

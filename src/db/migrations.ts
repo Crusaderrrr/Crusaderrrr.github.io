@@ -102,4 +102,8 @@ export const migrations: string[] = [
   ALTER TABLE workout_set ADD COLUMN incline_pct REAL CHECK (incline_pct >= 0);
   INSERT INTO exercise (name, muscle_group, equipment, is_cardio, rest_seconds, rest_custom)
     VALUES ('Treadmill', 'full_body', 'machine', 1, 0, 1) ON CONFLICT DO NOTHING;`,
+  // 7: per-session exercise note, and which set values were auto-filled from an earlier set
+  // (bit 1 = weight, bit 2 = reps) so they show dimmed and can be overwritten by later edits.
+  `ALTER TABLE workout_exercise ADD COLUMN note TEXT;
+  ALTER TABLE workout_set ADD COLUMN auto_fill INTEGER NOT NULL DEFAULT 0;`,
 ];

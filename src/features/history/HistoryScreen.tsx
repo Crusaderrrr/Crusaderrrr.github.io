@@ -9,6 +9,7 @@ import { useDbQuery } from '../../hooks/useDbQuery';
 import { GRIP_NAMES } from '../../repositories/exercises';
 import { sessionsByExercise } from '../../repositories/progress';
 import { listHistory } from '../../repositories/workouts';
+import TonnageChart from './TonnageChart';
 
 export const formatDate = (date: string) =>
   parseLocalDate(date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -28,6 +29,7 @@ export default function HistoryScreen() {
           No workouts yet. Finished workouts show up here.
         </div>
       )}
+      {data && data.items.length > 0 && <TonnageChart workouts={data.items} />}
       {data?.items.map((w) => {
         const prs = data.prs.get(w.id) ?? 0;
         return (

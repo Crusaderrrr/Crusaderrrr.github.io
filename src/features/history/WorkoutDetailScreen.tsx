@@ -51,6 +51,7 @@ export function WorkoutDetailScreen() {
               </span>
               <Icon name="chevronRight" className="h-5 w-5 text-neutral-600" />
             </Link>
+            {we.note && <p className="mt-2 px-1 text-sm text-neutral-400">{we.note}</p>}
             <ul className="mt-3 flex flex-col gap-1">
               {we.sets.map((s, i) => (
                 <li key={s.id} className="flex items-center gap-3 rounded-lg bg-neutral-800/50 px-3 py-1.5 text-sm">

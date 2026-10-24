@@ -174,11 +174,22 @@ export function DaySheet({ day, onClose }: { day: DayInfo; onClose: () => void }
           {day.skip && ` · ${SKIP_REASON_NAMES[day.skip.reason]}${day.skip.note ? ` — ${day.skip.note}` : ''}`}
         </p>
         {day.workouts.map((w) => (
-          <Link key={w.id} to={`/history/${w.id}`} className={`${btn.secondary} justify-start`}>
-            <Icon name="dumbbell" className="h-5 w-5 text-green-500" />
-            <span className="flex-1 text-left">{w.title}</span>
-            <Icon name="chevronRight" className="h-5 w-5 text-neutral-500" />
-          </Link>
+          <div key={w.id} className="flex flex-col gap-1.5">
+            <Link to={`/history/${w.id}`} className={`${btn.secondary} justify-start`}>
+              <Icon name="dumbbell" className="h-5 w-5 text-green-500" />
+              <span className="flex-1 text-left">{w.title}</span>
+              <Icon name="chevronRight" className="h-5 w-5 text-neutral-500" />
+            </Link>
+            {w.notes.length > 0 && (
+              <ul className="flex flex-col gap-1 px-1 text-sm text-neutral-400">
+                {w.notes.map((n, i) => (
+                  <li key={i}>
+                    <span className="font-medium text-neutral-200">{n.name}:</span> {n.note}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         ))}
         {day.workouts.length === 0 && (
           <button className={`${btn.secondary} justify-start`} onClick={() => setSkipping(true)}>

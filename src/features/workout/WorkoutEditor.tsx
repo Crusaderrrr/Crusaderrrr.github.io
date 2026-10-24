@@ -11,13 +11,13 @@ import {
   deleteWorkout,
   finalizeWorkout,
   replaceExercise,
-  swapExercises,
   updateWorkout,
   type WorkoutDetail,
 } from '../../repositories/workouts';
 import ExercisePicker from '../exercises/ExercisePicker';
 import ExerciseCard from './ExerciseCard';
 import FinishSheet, { resolvableSets } from './FinishSheet';
+import ReorderSheet from './ReorderSheet';
 import RestBar from './RestBar';
 
 /**
@@ -29,6 +29,7 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
   const navigate = useNavigate();
   const [picker, setPicker] = useState<{ replace?: number } | null>(null);
   const [finishing, setFinishing] = useState(false);
+  const [reordering, setReordering] = useState(false);
 
   const allSets = workout.exercises.flatMap((e) => e.sets);
   const summary = summarize(allSets);
@@ -57,12 +58,6 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
     }
     await finalizeWorkout(workout.id, [], {});
     navigate(`/history/${workout.id}`, { replace: true });
-  };
-
-  const move = (i: number, dir: -1 | 1) => {
-    const a = workout.exercises[i];
-    const b = workout.exercises[i + dir];
-    if (a && b) void swapExercises(a, b);
   };
 
   return (
@@ -101,13 +96,12 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
       >
         {mode === 'edit' && <EditFields workout={workout} />}
 
-        {workout.exercises.map((we, i) => (
+        {workout.exercises.map((we) => (
           <ExerciseCard
             key={we.id}
             we={we}
             workoutId={workout.id}
             withRest={mode === 'active'}
-            onMove={workout.exercises.length > 1 ? (dir) => move(i, dir) : undefined}
             onReplace={() => setPicker({ replace: we.id })}
           />
         ))}
@@ -123,6 +117,12 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
           <Icon name="add" />
           Add exercise
         </button>
+        {workout.exercises.length > 1 && (
+          <button className={btn.secondary} onClick={() => setReordering(true)}>
+            <Icon name="swap" className="h-5 w-5" />
+            Reorder exercises
+          </button>
+        )}
         <button
           className={btn.danger}
           onClick={() => {
@@ -150,6 +150,8 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
           }}
         />
       )}
+
+      {reordering && <ReorderSheet exercises={workout.exercises} onClose={() => setReordering(false)} />}
 
       {finishing && (
         <FinishSheet

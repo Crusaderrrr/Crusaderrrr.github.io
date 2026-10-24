@@ -23,6 +23,8 @@ export type WorkoutSet = {
   speedKmh: number | null;
   inclinePct: number | null;
   completed: number;
+  /** Bit 1 = weight, bit 2 = reps: value was copied from an earlier set, not typed here. */
+  autoFill: number;
 };
 
 export type WorkoutExercise = {
@@ -38,6 +40,8 @@ export type WorkoutExercise = {
   /** Treadmill-style: sets log time / speed / incline instead of kg / reps. */
   isCardio: number;
   grip: Grip | null;
+  /** Note for this exercise in this workout only. */
+  note: string | null;
   position: number;
   sets: WorkoutSet[];
   /** Completed sets from the most recent earlier finished workout with this exercise. */
@@ -61,14 +65,15 @@ export async function getWorkout(id: number): Promise<WorkoutDetail | null> {
   const exercises = await query<Omit<WorkoutExercise, 'sets' | 'previous'>>(
     `SELECT we.id, we.exercise_id AS exerciseId, e.name, e.muscle_group AS muscleGroup, e.image,
             e.rest_seconds AS restSeconds, e.rest_custom AS restCustom, e.has_grip AS hasGrip,
-            e.is_cardio AS isCardio, we.grip, we.position
+            e.is_cardio AS isCardio, we.grip, we.note, we.position
      FROM workout_exercise we JOIN exercise e ON e.id = we.exercise_id
      WHERE we.workout_id = ? ORDER BY we.position, we.id`,
     [id],
   );
   const sets = await query<WorkoutSet & { weId: number }>(
     `SELECT s.id, s.workout_exercise_id AS weId, s.position, s.set_type AS setType,
-            s.weight_kg AS weightKg, s.reps, s.speed_kmh AS speedKmh, s.incline_pct AS inclinePct, s.completed
+            s.weight_kg AS weightKg, s.reps, s.speed_kmh AS speedKmh, s.incline_pct AS inclinePct, s.completed,
+            s.auto_fill AS autoFill
      FROM workout_set s JOIN workout_exercise we ON we.id = s.workout_exercise_id
      WHERE we.workout_id = ? ORDER BY s.position, s.id`,
     [id],
@@ -193,21 +198,28 @@ export function setGrip(weId: number, grip: Grip) {
   return query('UPDATE workout_exercise SET grip = ? WHERE id = ?', [grip, weId]);
 }
 
-/** Swaps the positions of two workout exercises. */
-export function swapExercises(a: { id: number; position: number }, b: { id: number; position: number }) {
-  return batch([
-    { sql: 'UPDATE workout_exercise SET position = ? WHERE id = ?', bind: [b.position, a.id] },
-    { sql: 'UPDATE workout_exercise SET position = ? WHERE id = ?', bind: [a.position, b.id] },
-  ]);
+/** Persists a new exercise order (workout_exercise ids, top to bottom). */
+export function reorderExercises(ids: number[]) {
+  return batch(ids.map((id, i) => ({ sql: 'UPDATE workout_exercise SET position = ? WHERE id = ?', bind: [i, id] })));
 }
+
+export function setExerciseNote(weId: number, note: string) {
+  return query('UPDATE workout_exercise SET note = ? WHERE id = ?', [note.trim() || null, weId]);
+}
+
+/** Bits of `workout_set.auto_fill`. */
+export const AUTO_WEIGHT = 1;
+export const AUTO_REPS = 2;
 
 export function addSet(we: WorkoutExercise) {
   const v = nextSetValues(we.sets);
   const position = (we.sets.at(-1)?.position ?? -1) + 1;
   return query(
-    `INSERT INTO workout_set (workout_exercise_id, position, weight_kg, reps, speed_kmh, incline_pct)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [we.id, position, v.weightKg, v.reps, v.speedKmh ?? null, v.inclinePct ?? null],
+    `INSERT INTO workout_set (workout_exercise_id, position, weight_kg, reps, speed_kmh, incline_pct, auto_fill)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    // Copied values count as auto-filled, so editing an earlier set still updates them.
+    [we.id, position, v.weightKg, v.reps, v.speedKmh ?? null, v.inclinePct ?? null,
+      (v.weightKg === null ? 0 : AUTO_WEIGHT) | (v.reps === null ? 0 : AUTO_REPS)],
   );
 }
 
@@ -215,20 +227,34 @@ export type SetField = 'weight_kg' | 'reps' | 'speed_kmh' | 'incline_pct';
 
 /**
  * Clearing weight or reps of a completed set also un-completes it (completed sets need both);
- * speed and incline are optional.
+ * speed and incline are optional. A typed weight/reps is copied to the following sets that are
+ * not completed and whose value is empty or auto-filled (never to manually edited ones).
  */
 export function updateSetValue(id: number, field: SetField, value: number | null) {
-  const required = field === 'weight_kg' || field === 'reps';
-  return query(
-    `UPDATE workout_set SET ${field} = ?1,
-       completed = CASE WHEN ?1 IS NULL AND ?3 THEN 0 ELSE completed END
-     WHERE id = ?2`,
-    [value, id, required ? 1 : 0],
-  );
+  const bit = field === 'weight_kg' ? AUTO_WEIGHT : field === 'reps' ? AUTO_REPS : 0;
+  const statements: Statement[] = [
+    {
+      sql: `UPDATE workout_set SET ${field} = ?1,
+              completed = CASE WHEN ?1 IS NULL AND ?3 THEN 0 ELSE completed END,
+              auto_fill = auto_fill & ~?4
+            WHERE id = ?2`,
+      bind: [value, id, bit ? 1 : 0, bit],
+    },
+  ];
+  if (bit) {
+    statements.push({
+      sql: `UPDATE workout_set SET ${field} = ?1, auto_fill = auto_fill | ?3
+            WHERE completed = 0 AND (${field} IS NULL OR auto_fill & ?3)
+              AND workout_exercise_id = (SELECT workout_exercise_id FROM workout_set WHERE id = ?2)
+              AND position > (SELECT position FROM workout_set WHERE id = ?2)`,
+      bind: [value, id, bit],
+    });
+  }
+  return batch(statements);
 }
 
 const COMPLETE_SQL =
-  'UPDATE workout_set SET weight_kg = ?, reps = ?, speed_kmh = ?, incline_pct = ?, completed = 1 WHERE id = ?';
+  'UPDATE workout_set SET weight_kg = ?, reps = ?, speed_kmh = ?, incline_pct = ?, completed = 1, auto_fill = 0 WHERE id = ?';
 const completeBind = (id: number, v: CompletedValues) => [v.weightKg, v.reps, v.speedKmh, v.inclinePct, id];
 
 export function setSetType(id: number, type: SetType) {
@@ -315,11 +341,19 @@ export async function listHistory(): Promise<HistoryItem[]> {
   });
 }
 
-/** Finished workouts in a date range (for the calendar). */
-export function workoutsBetween(from: string, to: string) {
-  return query<{ id: number; title: string; date: string }>(
+/** Finished workouts in a date range (for the calendar), with their per-exercise notes. */
+export async function workoutsBetween(from: string, to: string) {
+  const workouts = await query<{ id: number; title: string; date: string }>(
     `SELECT id, title, date FROM workout
      WHERE finished_at IS NOT NULL AND date BETWEEN ? AND ? ORDER BY date, started_at`,
     [from, to],
   );
+  const notes = await query<{ workoutId: number; name: string; note: string }>(
+    `SELECT we.workout_id AS workoutId, e.name, we.note
+     FROM workout_exercise we JOIN exercise e ON e.id = we.exercise_id JOIN workout w ON w.id = we.workout_id
+     WHERE we.note IS NOT NULL AND w.finished_at IS NOT NULL AND w.date BETWEEN ? AND ?
+     ORDER BY we.position, we.id`,
+    [from, to],
+  );
+  return workouts.map((w) => ({ ...w, notes: notes.filter((n) => n.workoutId === w.id) }));
 }

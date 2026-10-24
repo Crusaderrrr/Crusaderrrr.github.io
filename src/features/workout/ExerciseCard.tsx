@@ -19,6 +19,7 @@ import {
   completeSet,
   deleteSet,
   removeWorkoutExercise,
+  setExerciseNote,
   setGrip,
   setSetType,
   uncompleteSet,
@@ -34,14 +35,12 @@ export default function ExerciseCard({
   we,
   workoutId,
   withRest,
-  onMove,
   onReplace,
 }: {
   we: WorkoutExercise;
   workoutId: number;
   /** Rest timer only runs during a live workout, not when editing history. */
   withRest: boolean;
-  onMove?: (dir: -1 | 1) => void;
   onReplace: () => void;
 }) {
   const [sheet, setSheet] = useState<'menu' | 'rest' | 'grip' | null>(null);
@@ -74,6 +73,16 @@ export default function ExerciseCard({
           <Icon name="more" />
         </button>
       </div>
+
+      {/* Uncontrolled: DB reloads must not clobber typing. The note belongs to this workout only. */}
+      <input
+        className="mt-2 w-full rounded-lg bg-transparent px-1 py-1 text-sm text-neutral-300 outline-none placeholder:text-neutral-600 focus:bg-neutral-800"
+        defaultValue={we.note ?? ''}
+        placeholder="Add a note…"
+        maxLength={120}
+        enterKeyHint="done"
+        onChange={(e) => void setExerciseNote(we.id, e.target.value)}
+      />
 
       {(withRest || we.grip) && (
         <div className="mt-2 flex flex-wrap gap-2">
@@ -185,16 +194,6 @@ export default function ExerciseCard({
             <MenuItem icon="swap" onClick={() => (close(), onReplace())}>
               Replace exercise
             </MenuItem>
-            {onMove && (
-              <>
-                <MenuItem icon="arrowUp" onClick={() => (close(), onMove(-1))}>
-                  Move up
-                </MenuItem>
-                <MenuItem icon="arrowDown" onClick={() => (close(), onMove(1))}>
-                  Move down
-                </MenuItem>
-              </>
-            )}
             <button
               className={`${btn.danger} justify-start`}
               onClick={() => {

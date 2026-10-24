@@ -82,6 +82,15 @@ Live URL: https://crusaderrrr.github.io/
 ## Feedback round 5 (2026-10-23) ✅
 - [x] Treadmill exercise: time / speed / incline sets instead of kg / reps (migration 6)
 
+## Feedback round 6 (2026-10-24) ✅
+- [x] Red delete background no longer bleeds through set rows (only mounted while swiped)
+- [x] Rest-timer end: screen flash removed (beep kept; there were no other sounds)
+- [x] Weight/reps auto-propagate to later incomplete sets; dimmed until edited/completed (migration 7)
+- [x] Tonnage chart (per week / per workout) on History; ranges 1M / 3M / 1Y / 3Y; per-exercise charts use the same ranges
+- [x] Reorder exercises: drag-and-drop sheet (replaces Move up/down)
+- [x] Per-session exercise note (migration 7); shown in History detail and the calendar day sheet
+- Notifications: options discussed in chat, not implemented
+
 ## Planned, not started
 - Self-hosted full-stack, multi-user version — see `MIGRATION.md` (decisions recorded 2026-10-22).
 
@@ -97,3 +106,4 @@ Live URL: https://crusaderrrr.github.io/
 - 2026-10-22 — Phases 1–6 implemented. E2E in Chrome (390×844): logging, reload mid-workout,
   finish flow, PRs, history edit, calendar/plan/skip, charts, export → delete → import restore.
 - 2026-10-23 — Treadmill (cardio sets) added; E2E in Chrome: log, finish, history, Previous.
+- 2026-10-24 — Feedback round 6 implemented; E2E in Chrome (390×844): auto-fill, notes → calendar, reorder, tonnage chart.
