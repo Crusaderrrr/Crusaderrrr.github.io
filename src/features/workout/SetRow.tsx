@@ -10,7 +10,7 @@ import {
   type SetType,
   type SetValues,
 } from '../../domain/sets';
-import { deleteSet, updateSetValue, type WorkoutSet } from '../../repositories/workouts';
+import { AUTO_REPS, AUTO_WEIGHT, deleteSet, updateSetValue, type WorkoutSet } from '../../repositories/workouts';
 
 const NONE: SetValues = { weightKg: null, reps: null };
 
@@ -54,17 +54,21 @@ export default function SetRow({
   const touchX = useRef<number | null>(null);
 
   const done = !!set.completed;
+  // Values copied from an earlier set show dimmed until the user edits them or completes the set.
+  const isAuto = (bit: number) => !done && (set.autoFill & bit) !== 0;
 
   return (
     <div className="relative overflow-hidden">
-      <button
-        className="absolute inset-y-1 right-0 flex w-20 items-center justify-center rounded-xl bg-red-600"
-        onClick={() => deleteSet(set.id)}
-        tabIndex={offset ? 0 : -1}
-        aria-label="Delete set"
-      >
-        <Icon name="delete" />
-      </button>
+      {/* Only mounted while swiped: kept behind the row it bled through the rounded edges. */}
+      {offset < 0 && (
+        <button
+          className="absolute inset-y-1 right-0 flex w-20 items-center justify-center rounded-xl bg-red-600"
+          onClick={() => deleteSet(set.id)}
+          aria-label="Delete set"
+        >
+          <Icon name="delete" />
+        </button>
+      )}
       <div
         className={`${cardio ? CARDIO_GRID : SET_GRID} relative my-1 rounded-xl p-0.5 transition-[transform,background-color] ${
           done ? 'bg-green-950' : 'bg-neutral-900'
@@ -86,6 +90,7 @@ export default function SetRow({
           <>
             <NumField
               value={set.reps}
+              auto={isAuto(AUTO_REPS)}
               previous={previous?.reps}
               format={formatTime}
               parse={parseTime}
@@ -111,6 +116,7 @@ export default function SetRow({
             <span className="truncate text-center text-sm text-neutral-500">{formatSet(previous ?? NONE, false)}</span>
             <NumField
               value={set.weightKg}
+              auto={isAuto(AUTO_WEIGHT)}
               previous={previous?.weightKg}
               format={formatWeight}
               parse={parseWeight}
@@ -118,6 +124,7 @@ export default function SetRow({
             />
             <NumField
               value={set.reps}
+              auto={isAuto(AUTO_REPS)}
               previous={previous?.reps}
               mode="numeric"
               format={String}
@@ -143,6 +150,7 @@ export default function SetRow({
 /** Set value input; holds a draft only while focused, so DB reloads never clobber typing. */
 function NumField({
   value,
+  auto,
   previous,
   mode = 'decimal',
   format,
@@ -150,6 +158,7 @@ function NumField({
   onSave,
 }: {
   value: number | null;
+  auto?: boolean;
   previous: number | null | undefined;
   mode?: 'decimal' | 'numeric';
   format: (n: number) => string;
@@ -159,7 +168,7 @@ function NumField({
   const [draft, setDraft] = useState<string | null>(null);
   return (
     <input
-      className={field}
+      className={`${field} ${auto ? 'text-neutral-500' : ''}`}
       inputMode={mode}
       placeholder={previous != null ? format(previous) : ''}
       value={draft ?? (value === null ? '' : format(value))}

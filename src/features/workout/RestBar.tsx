@@ -19,7 +19,6 @@ export default function RestBar({ workoutId, endsAt }: { workoutId: number; ends
     if (remaining > 0 || document.visibilityState !== 'visible' || fired.current === endsAt) return;
     fired.current = endsAt; // ticks keep coming until the cleared value reloads
     beep();
-    document.body.animate([{ backgroundColor: '#16a34a' }, { backgroundColor: 'transparent' }], 700);
     void updateWorkout(workoutId, { restEndsAt: null });
   }, [remaining, workoutId, endsAt]);
 
