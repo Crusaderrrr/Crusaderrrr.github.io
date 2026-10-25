@@ -1,0 +1,33 @@
+name: CI
+
+# The Pages deploy (deploy.yml) only runs on main; this checks the fullstack branch and PRs.
+on:
+  push:
+    branches: [fullstack]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: ttp
+          POSTGRES_PASSWORD: ttp
+          POSTGRES_DB: ttp
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ttp -d ttp" --health-interval 2s --health-retries 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run build:server

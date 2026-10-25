@@ -1,0 +1,17 @@
+# Local development database only: `npm run db:dev`. Port 5433 so it can't clash with a Postgres
+# installed on the host. Production uses compose.yaml.
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ttp
+      POSTGRES_PASSWORD: ttp
+      POSTGRES_DB: ttp
+    ports: ["127.0.0.1:5433:5432"]
+    volumes: [pgdata-dev:/var/lib/postgresql]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ttp -d ttp"]
+      interval: 2s
+      retries: 30
+volumes:
+  pgdata-dev:

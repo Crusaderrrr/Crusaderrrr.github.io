@@ -1,0 +1,33 @@
+# Production: `docker compose up -d --build`. Needs a .env (see .env.example).
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ttp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ttp
+    # Postgres 18 images keep data in a versioned subdirectory, so mount the parent.
+    volumes: [pgdata:/var/lib/postgresql]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ttp -d ttp"]
+      interval: 5s
+      retries: 20
+    # No `ports:` on purpose: Postgres is reachable from the app container only.
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgres://ttp:${POSTGRES_PASSWORD}@db:5432/ttp
+    # Loopback only: Docker-published ports bypass ufw. Tailscale Funnel proxies to this.
+    ports: ["127.0.0.1:3000:3000"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 15s
+      retries: 3
+
+volumes:
+  pgdata:

@@ -107,3 +107,4 @@ Live URL: https://crusaderrrr.github.io/
   finish flow, PRs, history edit, calendar/plan/skip, charts, export → delete → import restore.
 - 2026-10-23 — Treadmill (cardio sets) added; E2E in Chrome: log, finish, history, Previous.
 - 2026-10-24 — Feedback round 6 implemented; E2E in Chrome (390×844): auto-fill, notes → calendar, reorder, tonnage chart.
+- 2026-10-25 � Phase 7 (server skeleton) on `fullstack`: tests green, `docker compose up` verified (health, SPA, wasm MIME).
