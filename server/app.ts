@@ -1,12 +1,45 @@
 import path from 'node:path';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
+import type { AuthEnv } from './auth.js';
 import type { Sql } from './db.js';
+import { authRoutes } from './routes/auth.js';
 
-export function createApp(sql: Sql, staticDir: string): Hono {
-  const app = new Hono();
-  app.use(secureHeaders({ xFrameOptions: 'DENY' }));
+export function createApp(sql: Sql, staticDir: string): Hono<AuthEnv> {
+  const app = new Hono<AuthEnv>();
+  app.use(
+    secureHeaders({
+      xFrameOptions: 'DENY',
+      // 'wasm-unsafe-eval' is for sqlite-wasm (the v1 data layer, until the API replaces it);
+      // 'unsafe-inline' styles because React sets style attributes. Nothing loads from other origins.
+      contentSecurityPolicy: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'blob:'],
+        workerSrc: ["'self'", 'blob:'],
+        connectSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'none'"],
+      },
+    }),
+  );
+
+  // Exercise photos are the largest legitimate body.
+  app.use('/api/*', bodyLimit({ maxSize: 2 * 1024 * 1024, onError: (c) => c.json({ error: 'too_large' }, 413) }));
+  // Cross-site forms can't send application/json, and a cross-site fetch that does needs a CORS
+  // preflight we never grant: the CSRF defence on top of SameSite=Lax.
+  app.use('/api/*', async (c, next) => {
+    const safe = ['GET', 'HEAD', 'OPTIONS'].includes(c.req.method);
+    if (!safe && !c.req.header('content-type')?.startsWith('application/json')) {
+      return c.json({ error: 'unsupported_media_type' }, 415);
+    }
+    await next();
+  });
 
   app.get('/api/health', async (c) => {
     try {
@@ -16,6 +49,7 @@ export function createApp(sql: Sql, staticDir: string): Hono {
       return c.json({ ok: false }, 503);
     }
   });
+  app.route('/api/auth', authRoutes(sql));
   app.all('/api/*', (c) => c.json({ error: 'not_found' }, 404));
 
   // Hashed build assets never change; everything else (index.html, sw.js, manifest) must revalidate

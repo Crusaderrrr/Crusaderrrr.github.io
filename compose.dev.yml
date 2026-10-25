@@ -1,3 +1,4 @@
+name: ttp-dev
 # Local development database only: `npm run db:dev`. Port 5433 so it can't clash with a Postgres
 # installed on the host. Production uses compose.yaml.
 services:
