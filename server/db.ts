@@ -3,6 +3,7 @@ import path from 'node:path';
 import postgres from 'postgres';
 
 export type Sql = postgres.Sql;
+export type Tx = postgres.TransactionSql;
 
 export function connect(url: string, options: postgres.Options<Record<string, never>> = {}): Sql {
   return postgres(url, { onnotice: () => {}, ...options });

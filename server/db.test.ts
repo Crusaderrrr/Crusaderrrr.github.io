@@ -12,7 +12,7 @@ afterEach(() => drop());
 
 describe('migrate', () => {
   it('applies the real migrations once and is idempotent', async () => {
-    expect(await migrate(sql)).toEqual(['001_init.sql', '002_admin.sql']);
+    expect(await migrate(sql)).toEqual(['001_init.sql', '002_admin.sql', '003_data.sql']);
     expect(await migrate(sql)).toEqual([]);
     const rows = await sql<{ n: string }[]>`SELECT count(*) AS n FROM app_user`;
     expect(rows[0]?.n).toBe('0');

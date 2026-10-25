@@ -1,0 +1,103 @@
+import { z } from 'zod';
+import type { Sql } from '../db.js';
+import { DATE_RE, parseBody, privateRouter, SKIP_REASONS, userId } from './util.js';
+
+const dateParam = z.string().regex(DATE_RE);
+
+/** Weekly training plan, versioned by the date it takes effect. */
+export function planRoutes(sql: Sql) {
+  const app = privateRouter(sql);
+
+  app.get('/', async (c) => {
+    const rows = await sql<{ effective_from: string; days: number[] | null }[]>`
+      SELECT v.effective_from, array_agg(d.weekday ORDER BY d.weekday) FILTER (WHERE d.weekday IS NOT NULL) AS days
+      FROM plan_version v LEFT JOIN plan_day d ON d.plan_version_id = v.id
+      WHERE v.user_id = ${userId(c)}
+      GROUP BY v.id ORDER BY v.effective_from`;
+    return c.json(rows.map((r) => ({ effectiveFrom: r.effective_from, weekdays: r.days ?? [] })));
+  });
+
+  /** New plan version effective from `date`, replacing one that already starts that day. */
+  app.put('/', async (c) => {
+    const { data, error } = await parseBody(
+      c,
+      z.object({ date: dateParam, weekdays: z.array(z.number().int().min(1).max(7)).max(7) }),
+    );
+    if (error) return error;
+    const uid = userId(c);
+    const weekdays = [...new Set(data.weekdays)];
+    await sql.begin(async (tx) => {
+      const rows = await tx<{ id: string }[]>`
+        INSERT INTO plan_version (user_id, effective_from) VALUES (${uid}, ${data.date})
+        ON CONFLICT (user_id, effective_from) DO UPDATE SET effective_from = excluded.effective_from RETURNING id`;
+      const id = rows[0]!.id;
+      await tx`DELETE FROM plan_day WHERE plan_version_id = ${id}`;
+      if (weekdays.length) {
+        await tx`INSERT INTO plan_day ${tx(weekdays.map((weekday) => ({ plan_version_id: id, weekday })))}`;
+      }
+    });
+    return c.json({ ok: true });
+  });
+
+  return app;
+}
+
+/** Days marked as skipped, with a reason. */
+export function skipRoutes(sql: Sql) {
+  const app = privateRouter(sql);
+
+  app.get('/', async (c) => {
+    const q = z.object({ from: dateParam, to: dateParam }).safeParse(c.req.query());
+    if (!q.success) return c.json({ error: 'invalid_input', message: 'from and to are required.' }, 400);
+    const rows = await sql<{ date: string; reason: string; note: string | null }[]>`
+      SELECT date, reason, note FROM skip WHERE user_id = ${userId(c)} AND date BETWEEN ${q.data.from} AND ${q.data.to}`;
+    return c.json(rows);
+  });
+
+  app.put('/:date', async (c) => {
+    const date = dateParam.safeParse(c.req.param('date'));
+    const { data, error } = await parseBody(
+      c,
+      z.object({ reason: z.enum(SKIP_REASONS), note: z.string().max(500).nullable() }),
+    );
+    if (!date.success) return c.json({ error: 'invalid_input', message: 'Bad date.' }, 400);
+    if (error) return error;
+    await sql`
+      INSERT INTO skip (user_id, date, reason, note) VALUES (${userId(c)}, ${date.data}, ${data.reason}, ${data.note})
+      ON CONFLICT (user_id, date) DO UPDATE SET reason = excluded.reason, note = excluded.note`;
+    return c.json({ ok: true });
+  });
+
+  app.delete('/:date', async (c) => {
+    await sql`DELETE FROM skip WHERE user_id = ${userId(c)} AND date = ${c.req.param('date')}`;
+    return c.json({ ok: true });
+  });
+
+  return app;
+}
+
+export function settingsRoutes(sql: Sql) {
+  const app = privateRouter(sql);
+
+  app.get('/', async (c) => {
+    const rows = await sql<{ default_rest_seconds: number }[]>`
+      SELECT default_rest_seconds FROM user_settings WHERE user_id = ${userId(c)}`;
+    return c.json({ defaultRestSeconds: rows[0]?.default_rest_seconds ?? 120 });
+  });
+
+  /** Saves the default and applies it to every exercise whose rest wasn't set in a workout. */
+  app.put('/', async (c) => {
+    const { data, error } = await parseBody(c, z.object({ defaultRestSeconds: z.number().int().min(0).max(3600) }));
+    if (error) return error;
+    const uid = userId(c);
+    await sql.begin(async (tx) => {
+      await tx`
+        INSERT INTO user_settings (user_id, default_rest_seconds) VALUES (${uid}, ${data.defaultRestSeconds})
+        ON CONFLICT (user_id) DO UPDATE SET default_rest_seconds = excluded.default_rest_seconds`;
+      await tx`UPDATE exercise SET rest_seconds = ${data.defaultRestSeconds} WHERE user_id = ${uid} AND NOT rest_custom`;
+    });
+    return c.json({ ok: true });
+  });
+
+  return app;
+}

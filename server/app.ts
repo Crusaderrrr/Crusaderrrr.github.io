@@ -6,7 +6,10 @@ import { secureHeaders } from 'hono/secure-headers';
 import type { AuthEnv } from './auth.js';
 import type { Sql } from './db.js';
 import { authRoutes } from './routes/auth.js';
+import { exerciseRoutes } from './routes/exercises.js';
 import { inviteRoutes } from './routes/invites.js';
+import { planRoutes, settingsRoutes, skipRoutes } from './routes/planning.js';
+import { historyRoutes, progressRoutes, workoutRoutes } from './routes/workouts.js';
 
 export function createApp(sql: Sql, staticDir: string): Hono<AuthEnv> {
   const app = new Hono<AuthEnv>();
@@ -52,6 +55,13 @@ export function createApp(sql: Sql, staticDir: string): Hono<AuthEnv> {
   });
   app.route('/api/auth', authRoutes(sql));
   app.route('/api/invites', inviteRoutes(sql));
+  app.route('/api/exercises', exerciseRoutes(sql));
+  app.route('/api/settings', settingsRoutes(sql));
+  app.route('/api/plan', planRoutes(sql));
+  app.route('/api/skips', skipRoutes(sql));
+  app.route('/api/workouts', workoutRoutes(sql));
+  app.route('/api/history', historyRoutes(sql));
+  app.route('/api/progress', progressRoutes(sql));
   app.all('/api/*', (c) => c.json({ error: 'not_found' }, 404));
 
   // Hashed build assets never change; everything else (index.html, sw.js, manifest) must revalidate
