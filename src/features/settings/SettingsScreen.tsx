@@ -6,6 +6,7 @@ import { formatRest, REST_OPTIONS } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
 import { getDefaultRest, setDefaultRest } from '../../repositories/exercises';
 import { countExercises, getMeta } from '../../repositories/meta';
+import { useAuth } from '../auth/AuthGate';
 import { backupOverdue, exportBackup, importBackup, lastBackupAt } from './backup';
 
 export default function SettingsScreen() {
@@ -22,6 +23,7 @@ export default function SettingsScreen() {
   const fileInput = useRef<HTMLInputElement>(null);
   const defaultRest = useDbQuery(getDefaultRest, []);
   const [restSheet, setRestSheet] = useState(false);
+  const { user, logout } = useAuth();
 
   const doExport = async () => {
     try {
@@ -50,6 +52,19 @@ export default function SettingsScreen() {
   return (
     <div className="flex flex-col gap-5">
       <PageHeader title="Settings" />
+
+      <section className="flex flex-col gap-2">
+        <SectionTitle>Account</SectionTitle>
+        <div className={`${card} overflow-hidden`}>
+          <Row icon="check" iconBg="bg-green-600" title="Signed in as" detail={user.username} />
+        </div>
+        <button
+          className={btn.danger}
+          onClick={() => confirm('Log out of this device?') && void logout().catch((e: unknown) => setMessage(`Log out failed: ${e}`))}
+        >
+          Log out
+        </button>
+      </section>
 
       <section className="flex flex-col gap-2">
         <SectionTitle>Workout</SectionTitle>

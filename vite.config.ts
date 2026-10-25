@@ -41,5 +41,7 @@ export default defineConfig({
   ],
   optimizeDeps: { exclude: ['@sqlite.org/sqlite-wasm'] },
   worker: { format: 'es' },
+  // `npm run dev:server` listens here; same-origin cookies then work in dev too.
+  server: { proxy: { '/api': 'http://localhost:3000' } },
   test: { include: ['src/**/*.test.ts', 'server/**/*.test.ts'] },
 });
