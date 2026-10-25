@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DB_CHANGE } from '../db/client';
+import { DB_CHANGE } from '../api/events';
 
 /** Runs a repository read and re-runs it after every DB write. undefined while loading. */
 export function useDbQuery<T>(fn: () => Promise<T>, deps: unknown[]): T | undefined {

@@ -3,9 +3,9 @@ import type { SetType, SetValues } from './sets';
 
 export type ProgressSet = SetValues & { weightKg: number; reps: number; setType: SetType };
 /** One exercise's completed sets in one finished workout. */
-export type Session = { workoutId: number; date: string; sets: ProgressSet[] };
+export type Session = { workoutId: string; date: string; sets: ProgressSet[] };
 export type SessionStats = {
-  workoutId: number;
+  workoutId: string;
   date: string;
   topWeight: number;
   e1rm: number | null;
@@ -54,8 +54,8 @@ export function personalRecords(stats: SessionStats[]): PersonalRecords {
  * The first-ever session of an exercise sets no PRs. Input: per exercise, sessions in
  * chronological order.
  */
-export function prCountByWorkout(sessionsPerExercise: Session[][]): Map<number, number> {
-  const counts = new Map<number, number>();
+export function prCountByWorkout(sessionsPerExercise: Session[][]): Map<string, number> {
+  const counts = new Map<string, number>();
   for (const sessions of sessionsPerExercise) {
     const best = { topWeight: 0, e1rm: 0, volume: 0 };
     let first = true;

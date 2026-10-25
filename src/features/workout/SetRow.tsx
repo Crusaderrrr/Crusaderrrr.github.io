@@ -34,6 +34,7 @@ export const SET_TYPE_COLOR: Record<SetType, string> = {
  * Swipe left to reveal Delete.
  */
 export default function SetRow({
+  workoutId,
   set,
   label,
   previous,
@@ -42,6 +43,7 @@ export default function SetRow({
   onLabel,
   onToggle,
 }: {
+  workoutId: string;
   set: WorkoutSet;
   label: string;
   previous: SetValues | undefined;
@@ -63,7 +65,7 @@ export default function SetRow({
       {offset < 0 && (
         <button
           className="absolute inset-y-1 right-0 flex w-20 items-center justify-center rounded-xl bg-red-600"
-          onClick={() => deleteSet(set.id)}
+          onClick={() => deleteSet(workoutId, set.id)}
           aria-label="Delete set"
         >
           <Icon name="delete" />
@@ -94,21 +96,21 @@ export default function SetRow({
               previous={previous?.reps}
               format={formatTime}
               parse={parseTime}
-              onSave={(v) => updateSetValue(set.id, 'reps', v)}
+              onSave={(v) => updateSetValue(workoutId, set.id, 'reps', v)}
             />
             <NumField
               value={set.speedKmh}
               previous={previous?.speedKmh}
               format={formatWeight}
               parse={parseWeight}
-              onSave={(v) => updateSetValue(set.id, 'speed_kmh', v)}
+              onSave={(v) => updateSetValue(workoutId, set.id, 'speed_kmh', v)}
             />
             <NumField
               value={set.inclinePct}
               previous={previous?.inclinePct}
               format={formatWeight}
               parse={parseWeight}
-              onSave={(v) => updateSetValue(set.id, 'incline_pct', v)}
+              onSave={(v) => updateSetValue(workoutId, set.id, 'incline_pct', v)}
             />
           </>
         ) : (
@@ -120,7 +122,7 @@ export default function SetRow({
               previous={previous?.weightKg}
               format={formatWeight}
               parse={parseWeight}
-              onSave={(v) => updateSetValue(set.id, 'weight_kg', v)}
+              onSave={(v) => updateSetValue(workoutId, set.id, 'weight_kg', v)}
             />
             <NumField
               value={set.reps}
@@ -129,7 +131,7 @@ export default function SetRow({
               mode="numeric"
               format={String}
               parse={parseReps}
-              onSave={(v) => updateSetValue(set.id, 'reps', v)}
+              onSave={(v) => updateSetValue(workoutId, set.id, 'reps', v)}
             />
           </>
         )}

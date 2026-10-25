@@ -12,7 +12,6 @@ import { STATUS_NAME, STATUS_STYLE } from '../calendar/CalendarScreen';
 import SkipSheet from '../calendar/SkipSheet';
 import { useDays, type DayInfo } from '../calendar/useDays';
 import { formatDate } from '../history/HistoryScreen';
-import { backupOverdue } from '../settings/backup';
 
 // ponytail: missed days older than this aren't nagged about; they still show on the Calendar.
 const MISSED_LOOKBACK_DAYS = 14;
@@ -152,14 +151,6 @@ export default function TodayScreen() {
             </div>
           </Link>
         </section>
-      )}
-
-      {last && backupOverdue() && (
-        <Link to="/settings" className="flex items-center gap-3 rounded-2xl bg-amber-500/10 p-4 text-amber-300 ring-1 ring-amber-500/30">
-          <Icon name="save" />
-          <span className="flex-1 text-sm">No backup in the last 14 days — export one in Settings</span>
-          <Icon name="chevronRight" />
-        </Link>
       )}
 
       {skipDay && <SkipSheet date={skipDay.date} skip={skipDay.skip} onClose={() => setSkipDay(null)} />}

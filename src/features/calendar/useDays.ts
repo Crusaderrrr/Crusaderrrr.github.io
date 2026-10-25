@@ -9,7 +9,7 @@ export type DayInfo = {
   date: string;
   planned: boolean;
   status: DayStatus;
-  workouts: { id: number; title: string; notes: { name: string; note: string }[] }[];
+  workouts: { id: string; title: string; notes: { name: string; note: string }[] }[];
   skip: Skip | undefined;
 };
 

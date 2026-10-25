@@ -27,7 +27,7 @@ import RestBar from './RestBar';
  */
 export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetail; mode: 'active' | 'edit' }) {
   const navigate = useNavigate();
-  const [picker, setPicker] = useState<{ replace?: number } | null>(null);
+  const [picker, setPicker] = useState<{ replace?: string } | null>(null);
   const [finishing, setFinishing] = useState(false);
   const [reordering, setReordering] = useState(false);
 
@@ -145,13 +145,13 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
           onClose={() => setPicker(null)}
           onDone={(ids) => {
             setPicker(null);
-            if (picker.replace !== undefined) void replaceExercise(picker.replace, ids[0]!);
+            if (picker.replace !== undefined) void replaceExercise(workout.id, picker.replace, ids[0]!);
             else void addExercises(workout.id, ids);
           }}
         />
       )}
 
-      {reordering && <ReorderSheet exercises={workout.exercises} onClose={() => setReordering(false)} />}
+      {reordering && <ReorderSheet workoutId={workout.id} exercises={workout.exercises} onClose={() => setReordering(false)} />}
 
       {finishing && (
         <FinishSheet

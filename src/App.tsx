@@ -1,9 +1,6 @@
-import { useEffect, useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router';
-import { dbReady } from './db/client';
 import Icon from './components/Icon';
 import TabBar from './components/TabBar';
-import { btn } from './components/ui';
 import { formatClock } from './domain/workout';
 import { useDbQuery, useNow } from './hooks/useDbQuery';
 import { getActiveWorkout } from './repositories/workouts';
@@ -17,24 +14,7 @@ import ExerciseProgressScreen from './features/progress/ExerciseProgressScreen';
 import SettingsScreen from './features/settings/SettingsScreen';
 import ActiveWorkoutScreen from './features/workout/ActiveWorkoutScreen';
 
-type DbState = { status: 'loading' } | { status: 'ready' } | { status: 'error'; message: string };
-
 export default function App() {
-  const [db, setDb] = useState<DbState>({ status: 'loading' });
-
-  useEffect(() => {
-    dbReady.then(
-      () => setDb({ status: 'ready' }),
-      (e: unknown) => setDb({ status: 'error', message: String(e) }),
-    );
-  }, []);
-
-  if (db.status === 'loading') return null;
-  if (db.status === 'error') return <DbErrorScreen message={db.message} />;
-  return <Shell />;
-}
-
-function Shell() {
   const { pathname } = useLocation();
   // The logging screens are full-screen, like Hevy.
   const fullScreen = pathname === '/workout' || pathname.endsWith('/edit');
@@ -85,22 +65,5 @@ function ActiveWorkoutBar() {
       <span className="font-semibold tabular-nums">{formatClock((now - Date.parse(active.startedAt)) / 1000)}</span>
       <Icon name="chevronRight" className="h-5 w-5" />
     </Link>
-  );
-}
-
-// opfs-sahpool allows one instance per origin; a second tab/window fails to open the DB.
-function DbErrorScreen({ message }: { message: string }) {
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center">
-      <Icon name="database" className="h-12 w-12 text-neutral-600" />
-      <h1 className="text-xl font-semibold">Can't open your data</h1>
-      <p className="text-neutral-400">
-        TTP is probably open somewhere else (another tab or window). Close it and reopen the app.
-      </p>
-      <p className="break-all text-xs text-neutral-600">{message}</p>
-      <button className={btn.primary} onClick={() => location.reload()}>
-        Retry
-      </button>
-    </div>
   );
 }

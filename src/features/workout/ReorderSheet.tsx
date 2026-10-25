@@ -9,9 +9,17 @@ const ROW = 56; // px, fixed so the pointer position maps straight to a list ind
  * Drag the handles to reorder; the new order is saved on drop. Pointer events + touch-action: none
  * on the handle keep the sheet from scrolling under the finger (works the same with mouse).
  */
-export default function ReorderSheet({ exercises, onClose }: { exercises: WorkoutExercise[]; onClose: () => void }) {
+export default function ReorderSheet({
+  workoutId,
+  exercises,
+  onClose,
+}: {
+  workoutId: string;
+  exercises: WorkoutExercise[];
+  onClose: () => void;
+}) {
   const [order, setOrder] = useState(exercises.map((e) => e.id));
-  const [drag, setDrag] = useState<{ id: number; y: number } | null>(null);
+  const [drag, setDrag] = useState<{ id: string; y: number } | null>(null);
   const list = useRef<HTMLUListElement>(null);
   const grab = useRef(0);
   const byId = new Map(exercises.map((e) => [e.id, e]));
@@ -33,7 +41,7 @@ export default function ReorderSheet({ exercises, onClose }: { exercises: Workou
   const drop = () => {
     if (!drag) return;
     setDrag(null);
-    if (order.some((id, i) => id !== exercises[i]!.id)) void reorderExercises(order);
+    if (order.some((id, i) => id !== exercises[i]!.id)) void reorderExercises(workoutId, order);
   };
 
   return (

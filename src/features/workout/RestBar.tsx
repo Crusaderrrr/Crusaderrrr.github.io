@@ -9,7 +9,7 @@ import { beep } from './beep';
  * Countdown derived from the persisted rest_ends_at, so it survives reloads. The "time's up"
  * signal can only fire while the app is visible — iOS suspends background PWAs (SPEC §7).
  */
-export default function RestBar({ workoutId, endsAt }: { workoutId: number; endsAt: string }) {
+export default function RestBar({ workoutId, endsAt }: { workoutId: string; endsAt: string }) {
   const now = useNow(250);
   const remaining = (Date.parse(endsAt) - now) / 1000;
 

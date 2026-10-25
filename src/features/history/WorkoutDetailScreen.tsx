@@ -12,7 +12,7 @@ import WorkoutEditor from '../workout/WorkoutEditor';
 import { formatDate } from './HistoryScreen';
 
 function useWorkoutParam() {
-  const id = Number(useParams().id);
+  const id = useParams().id ?? '';
   return useDbQuery(() => getWorkout(id), [id]);
 }
 

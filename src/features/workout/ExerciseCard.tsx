@@ -38,20 +38,20 @@ export default function ExerciseCard({
   onReplace,
 }: {
   we: WorkoutExercise;
-  workoutId: number;
+  workoutId: string;
   /** Rest timer only runs during a live workout, not when editing history. */
   withRest: boolean;
   onReplace: () => void;
 }) {
   const [sheet, setSheet] = useState<'menu' | 'rest' | 'grip' | null>(null);
   const [typeFor, setTypeFor] = useState<WorkoutSet | null>(null);
-  const [shaking, setShaking] = useState<number | null>(null);
+  const [shaking, setShaking] = useState<string | null>(null);
 
   const labels = setLabels(we.sets.map((s) => s.setType));
   const close = () => setSheet(null);
 
   const toggle = (set: WorkoutSet, i: number) => {
-    if (set.completed) return void uncompleteSet(set.id);
+    if (set.completed) return void uncompleteSet(workoutId, set.id);
     const values = completeValues(set, we.previous[i]);
     if (!values) {
       setShaking(set.id);
@@ -59,7 +59,7 @@ export default function ExerciseCard({
       return;
     }
     unlockAudio();
-    void completeSet(set.id, values, withRest ? { workoutId, seconds: we.restSeconds } : undefined);
+    void completeSet(workoutId, set.id, values, withRest ? { seconds: we.restSeconds } : undefined);
   };
 
   return (
@@ -81,7 +81,7 @@ export default function ExerciseCard({
         placeholder="Add a note…"
         maxLength={120}
         enterKeyHint="done"
-        onChange={(e) => void setExerciseNote(we.id, e.target.value)}
+        onChange={(e) => void setExerciseNote(workoutId, we.id, e.target.value)}
       />
 
       {(withRest || we.grip) && (
@@ -121,6 +121,7 @@ export default function ExerciseCard({
       {we.sets.map((s, i) => (
         <SetRow
           key={s.id}
+          workoutId={workoutId}
           set={s}
           label={labels[i]!}
           previous={we.previous[i]}
@@ -130,7 +131,7 @@ export default function ExerciseCard({
           onToggle={() => toggle(s, i)}
         />
       ))}
-      <button className={`${btn.secondary} mt-2 w-full py-2.5`} onClick={() => addSet(we)}>
+      <button className={`${btn.secondary} mt-2 w-full py-2.5`} onClick={() => addSet(workoutId, we.id)}>
         <Icon name="add" className="h-5 w-5" />
         Add set
       </button>
@@ -144,7 +145,7 @@ export default function ExerciseCard({
                 // ring-inset: an outer ring gets clipped by the sheet's scroll container
                 className={`${btn.secondary} justify-start ${t === typeFor.setType ? 'ring-2 ring-green-500 ring-inset' : ''}`}
                 onClick={() => {
-                  void setSetType(typeFor.id, t);
+                  void setSetType(workoutId, typeFor.id, t);
                   setTypeFor(null);
                 }}
               >
@@ -155,7 +156,7 @@ export default function ExerciseCard({
             <button
               className={`${btn.danger} justify-start`}
               onClick={() => {
-                void deleteSet(typeFor.id);
+                void deleteSet(workoutId, typeFor.id);
                 setTypeFor(null);
               }}
             >
@@ -174,7 +175,7 @@ export default function ExerciseCard({
                 key={g}
                 className={`${btn.secondary} justify-between ${g === we.grip ? 'ring-2 ring-green-500 ring-inset' : ''}`}
                 onClick={() => {
-                  void setGrip(we.id, g);
+                  void setGrip(workoutId, we.id, g);
                   close();
                 }}
               >
@@ -198,7 +199,7 @@ export default function ExerciseCard({
               className={`${btn.danger} justify-start`}
               onClick={() => {
                 close();
-                void removeWorkoutExercise(we.id);
+                void removeWorkoutExercise(workoutId, we.id);
               }}
             >
               <Icon name="delete" className="h-5 w-5" />
