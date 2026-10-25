@@ -114,7 +114,12 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Client: repositories call the API; workout edits are pure functions in `domain/workoutDoc.ts` (tested) applied to a cached document and saved whole, one request at a time (`repositories/workoutStore.ts`)
 - [x] `src/db/` (SQLite worker) is no longer loaded; kept only so phase 11 can read a v1 backup. Export/import-database UI, "App launches" and the backup nudge are gone
 - [x] E2E in Chrome: sign-up → start → add exercises → sets with auto-fill → reload mid-workout → finish (PR count) → history, tonnage chart, progress page → second workout shows Previous
-- Known gaps (phase 10): an edit is lost if the connection drops before it is saved; no offline banner; each edit waits on the network to be durable
+
+### Phase 10 — Local-first active workout ✅
+- [x] `repositories/workoutStore.ts`: edits apply to the cached document instantly and are mirrored to `localStorage` (`ttp:pending:<id>`); the whole document is PUT after a 1 s debounce, retried with backoff (2 s … 30 s) while the network/server fails, flushed on background / `pagehide` / `online`; copies left in storage are re-saved on the next launch. Last write wins
+- [x] "Offline — changes will sync" banner while a save is failing (`App.tsx`, `useSyncFailing`)
+- [x] E2E in Chrome (390×844): go offline → fill set + mark done → banner shows, copy in localStorage → back online → synced, banner and copy gone; a stale pending copy is saved on reload
+- Not covered: adding/replacing an exercise offline (needs the exercise list + "Previous" from the server); a 4xx refusal drops the local copy
 
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
@@ -132,3 +137,4 @@ Live URL: https://crusaderrrr.github.io/
 - 2026-10-25 — Phases 7–8 on `fullstack`: server skeleton + accounts; tests green, `docker compose up` and sign-up/login/logout verified in Chrome.
 - 2026-10-25 — In-app invite links (owner only) added; E2E in Chrome: owner mints link, friend signs up from it, friend has no invite button.
 - 2026-10-25 — Phase 9 (API + client) on `fullstack`: workouts as documents, per-account data; E2E in Chrome.
+- 2026-10-25 — Phase 10 (local-first active workout) on `fullstack`: local copy, debounced sync with retry, offline banner.

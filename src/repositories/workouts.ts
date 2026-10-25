@@ -10,7 +10,7 @@ export { AUTO_REPS, AUTO_WEIGHT } from '../domain/workoutDoc';
 export type { SetField, Workout, WorkoutDetail, WorkoutExercise, WorkoutSet } from '../domain/workoutDoc';
 
 // Every edit below is a pure function from domain/workoutDoc applied to the cached document and
-// saved whole (see workoutStore). The promise resolves once the server has the change.
+// saved whole in the background (see workoutStore). The promise resolves once the edit is applied locally.
 
 const newId = () => crypto.randomUUID();
 

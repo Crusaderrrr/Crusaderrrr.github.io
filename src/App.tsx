@@ -3,6 +3,7 @@ import Icon from './components/Icon';
 import TabBar from './components/TabBar';
 import { formatClock } from './domain/workout';
 import { useDbQuery, useNow } from './hooks/useDbQuery';
+import { useSyncFailing } from './hooks/useSyncFailing';
 import { getActiveWorkout } from './repositories/workouts';
 import TodayScreen from './features/today/TodayScreen';
 import HistoryScreen from './features/history/HistoryScreen';
@@ -21,6 +22,7 @@ export default function App() {
 
   return (
     <div className={`flex h-full flex-col ${fullScreen ? '' : 'pt-[env(safe-area-inset-top)]'}`}>
+      <SyncBanner />
       {/* Logging screens manage their own scrolling (fixed header + scrolling body). */}
       <main className={fullScreen ? 'min-h-0 flex-1' : 'scroll-area min-h-0 flex-1 px-4 pt-3 pb-6'}>
         <Routes>
@@ -43,6 +45,16 @@ export default function App() {
           <TabBar />
         </>
       )}
+    </div>
+  );
+}
+
+/** Shown while workout changes are waiting for the server (MIGRATION §7). */
+function SyncBanner() {
+  if (!useSyncFailing()) return null;
+  return (
+    <div role="status" className="shrink-0 bg-amber-500 px-4 py-1 text-center text-xs font-semibold text-neutral-950">
+      Offline — changes will sync
     </div>
   );
 }
