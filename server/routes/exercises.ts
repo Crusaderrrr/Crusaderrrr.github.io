@@ -11,14 +11,20 @@ type ExerciseRow = {
   is_custom: boolean;
   archived: boolean;
   rest_seconds: number;
+  rest_custom: boolean;
   favorite: boolean;
   image: string | null;
   has_grip: boolean;
   is_cardio: boolean;
+  last_grip: string | null;
 };
 
-const COLS =
-  'id, name, muscle_group, equipment, is_custom, archived, rest_seconds, favorite, image, has_grip, is_cardio';
+const COLS = `id, name, muscle_group, equipment, is_custom, archived, rest_seconds, rest_custom, favorite, image,
+  has_grip, is_cardio,
+  CASE WHEN exercise.has_grip THEN (
+    SELECT we.grip FROM workout_exercise we JOIN workout w ON w.id = we.workout_id
+    WHERE we.exercise_id = exercise.id AND we.grip IS NOT NULL ORDER BY w.started_at DESC, we.position DESC LIMIT 1
+  ) END AS last_grip`;
 
 // Flags go out as 0 / 1, the shape the app has always used for them.
 export const exerciseJson = (r: ExerciseRow) => ({
@@ -29,10 +35,12 @@ export const exerciseJson = (r: ExerciseRow) => ({
   isCustom: +r.is_custom,
   archived: +r.archived,
   restSeconds: r.rest_seconds,
+  restCustom: +r.rest_custom,
   favorite: +r.favorite,
   image: r.image,
   hasGrip: +r.has_grip,
   isCardio: +r.is_cardio,
+  lastGrip: r.last_grip,
 });
 
 const createBody = z.object({

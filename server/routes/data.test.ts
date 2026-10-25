@@ -301,6 +301,8 @@ describe('workouts', () => {
     const q = `grip=wide&date=2026-09-10&startedAt=${encodeURIComponent('2026-09-10T17:00:00.000Z')}`;
     expect((await call('GET', `/api/exercises/${row}/previous?${q}`, bob)).json).toHaveLength(1);
     expect((await call('GET', `/api/exercises/${row}/previous?${q}`, ann)).json).toEqual([]); // not ann's history
+    // the grip used last time is offered when the exercise is added again
+    expect((await call('GET', `/api/exercises/${row}`, bob)).json.lastGrip).toBe('narrow');
     await call('DELETE', `/api/workouts/${today.id}`, bob);
   });
 
