@@ -127,6 +127,11 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Checked with the real backup (`ttp-2026-10-25.sqlite3`, v7): reader output posted to a real server twice → 1 workout, plan Mon–Fri, skip 22 Oct, default rest 180 s, 3 favourites, no duplicates
 - [ ] Click-through of the file picker in a browser (Chrome tool was unavailable)
 
+### Phase 12 — Deploy on the laptop (in progress)
+- [x] `DEPLOY.md`: lid/updates/ufw, Docker Engine on Mint, `.env`, compose up, first invite, Tailscale Funnel, v1 data move, nightly `pg_dump` timer (keep 14) + restore, updates, troubleshooting
+- [ ] Run it on the laptop (owner); not tested by me
+- Skipped on purpose: turning the old GitHub Pages site into a "moved to …" page
+
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
 - Rest-timer beep on iOS (Web Audio is muted while the ringer switch is on silent).
@@ -145,3 +150,4 @@ Live URL: https://crusaderrrr.github.io/
 - 2026-10-25 — Phase 9 (API + client) on `fullstack`: workouts as documents, per-account data; E2E in Chrome.
 - 2026-10-25 — Phase 10 (local-first active workout) on `fullstack`: local copy, debounced sync with retry, offline banner.
 - 2026-10-25 — Phase 11 (v1 backup import) on `fullstack`: API + worker reader + Settings button; real backup imported twice against the dev DB.
+- 2026-10-25 — Phase 12: `DEPLOY.md` written; the laptop steps themselves are not run yet.
