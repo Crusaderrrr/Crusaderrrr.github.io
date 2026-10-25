@@ -91,8 +91,22 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Per-session exercise note (migration 7); shown in History detail and the calendar day sheet
 - Notifications: options discussed in chat, not implemented
 
-## Planned, not started
-- Self-hosted full-stack, multi-user version — see `MIGRATION.md` (decisions recorded 2026-10-22).
+## v2 self-hosted full-stack (branch `fullstack`, see `MIGRATION.md`)
+### Phase 7 — Server skeleton ✅
+- [x] Hono + postgres.js server (`server/`), migrations runner (`schema_migrations`, advisory lock, one transaction)
+- [x] `001_init.sql`: `app_user`, `session`, `invite`, `user_settings`
+- [x] Serves the built SPA (hashed assets immutable, rest `no-cache`), `/api/health`, JSON 404 under `/api`
+- [x] `Dockerfile`, `compose.yaml` (Postgres internal only, app on 127.0.0.1:3000), `compose.dev.yml` (`npm run db:dev`, port 5433)
+- [x] CI (`ci.yml`) on `fullstack` + PRs with a Postgres service; server tests need `npm run db:dev` locally
+
+### Phase 8 — Accounts ✅
+- [x] Invite-only sign-up (single-use codes, atomic with user creation), login, logout, `GET /api/auth/me`
+- [x] argon2id passwords; sessions = random token in HttpOnly/Secure/SameSite=Lax cookie, only SHA-256 stored, 30-day sliding expiry
+- [x] Rate limit 10 / 15 min per client + username (sign-up per client); JSON-only guard for writes (CSRF); 2 MB body limit; CSP + security headers
+- [x] Owner CLI: `docker compose exec app node dist-server/cli.js invite [count]` / `users`
+- [x] Login / sign-up screen as a gate around the app; Settings → Account (signed in as, log out)
+- [x] E2E in Chrome (390×844) against the real server under the CSP: bad invite, sign-up, reload keeps session, logout
+- Until phase 9 the workout data is still the per-browser SQLite; accounts only gate access.
 
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
@@ -107,4 +121,4 @@ Live URL: https://crusaderrrr.github.io/
   finish flow, PRs, history edit, calendar/plan/skip, charts, export → delete → import restore.
 - 2026-10-23 — Treadmill (cardio sets) added; E2E in Chrome: log, finish, history, Previous.
 - 2026-10-24 — Feedback round 6 implemented; E2E in Chrome (390×844): auto-fill, notes → calendar, reorder, tonnage chart.
-- 2026-10-25 � Phase 7 (server skeleton) on `fullstack`: tests green, `docker compose up` verified (health, SPA, wasm MIME).
+- 2026-10-25 — Phases 7–8 on `fullstack`: server skeleton + accounts; tests green, `docker compose up` and sign-up/login/logout verified in Chrome.

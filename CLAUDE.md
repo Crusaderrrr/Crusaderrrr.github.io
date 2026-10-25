@@ -23,6 +23,10 @@ is `SPEC.md` — read the relevant section before every task.** Current status l
 
 Run `typecheck` and `test` before saying a task is done.
 
+v2 (`fullstack` branch, `server/`): `npm run db:dev` starts the local Postgres (Docker, port 5433) —
+server tests need it. `npm run dev:server` runs the API (needs `DATABASE_URL`), `npm run dev` proxies
+`/api` to it. `docker compose up -d --build` = production stack (see `.env.example`).
+
 ## Architecture rules
 - All SQL runs in `src/db/db.worker.ts`. UI → `repositories/` → `db/client.ts` (RPC) → worker.
 - SQL only in `src/repositories/` and `src/db/migrations.ts`. Never in components or hooks.
