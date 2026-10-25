@@ -107,7 +107,14 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Login / sign-up screen as a gate around the app; Settings → Account (signed in as, log out)
 - [x] E2E in Chrome (390×844) against the real server under the CSP: bad invite, sign-up, reload keeps session, logout
 - [x] Owner = first account (`is_admin`, migration 002). Settings → **Invite a friend** mints a single-use code as a sign-up link (`/#/signup?invite=…` prefills the form); Share sheet on iOS, copy elsewhere. The very first invite still comes from the CLI.
-- Until phase 9 the workout data is still the per-browser SQLite; accounts only gate access.
+
+### Phase 9 — API + client ✅
+- [x] Migration 003: `exercise`, `workout` / `workout_exercise` / `workout_set` (client UUIDs), `plan_version` / `plan_day`, `skip`; every row owned by a user; seed library (53 exercises) copied per account at sign-up
+- [x] Endpoints: exercises (CRUD, patch, previous), settings, plan, skips, workouts (a workout is one document: `GET/PUT/DELETE /api/workouts/:id`, `/active`, calendar range), history, progress sessions; all filtered by the session's user
+- [x] Client: repositories call the API; workout edits are pure functions in `domain/workoutDoc.ts` (tested) applied to a cached document and saved whole, one request at a time (`repositories/workoutStore.ts`)
+- [x] `src/db/` (SQLite worker) is no longer loaded; kept only so phase 11 can read a v1 backup. Export/import-database UI, "App launches" and the backup nudge are gone
+- [x] E2E in Chrome: sign-up → start → add exercises → sets with auto-fill → reload mid-workout → finish (PR count) → history, tonnage chart, progress page → second workout shows Previous
+- Known gaps (phase 10): an edit is lost if the connection drops before it is saved; no offline banner; each edit waits on the network to be durable
 
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
@@ -124,3 +131,4 @@ Live URL: https://crusaderrrr.github.io/
 - 2026-10-24 — Feedback round 6 implemented; E2E in Chrome (390×844): auto-fill, notes → calendar, reorder, tonnage chart.
 - 2026-10-25 — Phases 7–8 on `fullstack`: server skeleton + accounts; tests green, `docker compose up` and sign-up/login/logout verified in Chrome.
 - 2026-10-25 — In-app invite links (owner only) added; E2E in Chrome: owner mints link, friend signs up from it, friend has no invite button.
+- 2026-10-25 — Phase 9 (API + client) on `fullstack`: workouts as documents, per-account data; E2E in Chrome.
