@@ -5,7 +5,7 @@ import type { Context, MiddlewareHandler } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import type { Sql } from './db.js';
 
-export type User = { id: number; username: string };
+export type User = { id: number; username: string; isAdmin: boolean };
 export type AuthEnv = { Bindings: HttpBindings; Variables: { user: User } };
 
 export const COOKIE = 'ttp_session';
@@ -60,12 +60,12 @@ export const sessionMiddleware = (sql: Sql): MiddlewareHandler<AuthEnv> => async
   const token = getCookie(c, COOKIE);
   if (token) {
     const h = sha256(token);
-    const rows = await sql<{ id: string; username: string }[]>`
-      SELECT u.id, u.username FROM session s JOIN app_user u ON u.id = s.user_id
+    const rows = await sql<{ id: string; username: string; is_admin: boolean }[]>`
+      SELECT u.id, u.username, u.is_admin FROM session s JOIN app_user u ON u.id = s.user_id
       WHERE s.token_hash = ${h} AND s.expires_at > now()`;
     const row = rows[0];
     if (row) {
-      c.set('user', { id: Number(row.id), username: row.username });
+      c.set('user', { id: Number(row.id), username: row.username, isAdmin: row.is_admin });
       const slid = await sql`
         UPDATE session SET expires_at = now() + make_interval(days => ${SESSION_DAYS})
         WHERE token_hash = ${h} AND expires_at < now() + make_interval(days => ${SESSION_DAYS - 1})`;
@@ -77,6 +77,11 @@ export const sessionMiddleware = (sql: Sql): MiddlewareHandler<AuthEnv> => async
 
 export const requireUser: MiddlewareHandler<AuthEnv> = async (c, next) => {
   if (!c.get('user')) return c.json({ error: 'unauthorized', message: 'Please log in.' }, 401);
+  await next();
+};
+
+export const requireAdmin: MiddlewareHandler<AuthEnv> = async (c, next) => {
+  if (!c.get('user').isAdmin) return c.json({ error: 'forbidden', message: 'Owner only.' }, 403);
   await next();
 };
 

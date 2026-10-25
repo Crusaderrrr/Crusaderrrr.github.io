@@ -106,6 +106,7 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Owner CLI: `docker compose exec app node dist-server/cli.js invite [count]` / `users`
 - [x] Login / sign-up screen as a gate around the app; Settings → Account (signed in as, log out)
 - [x] E2E in Chrome (390×844) against the real server under the CSP: bad invite, sign-up, reload keeps session, logout
+- [x] Owner = first account (`is_admin`, migration 002). Settings → **Invite a friend** mints a single-use code as a sign-up link (`/#/signup?invite=…` prefills the form); Share sheet on iOS, copy elsewhere. The very first invite still comes from the CLI.
 - Until phase 9 the workout data is still the per-browser SQLite; accounts only gate access.
 
 ## Not verified yet
@@ -122,3 +123,4 @@ Live URL: https://crusaderrrr.github.io/
 - 2026-10-23 — Treadmill (cardio sets) added; E2E in Chrome: log, finish, history, Previous.
 - 2026-10-24 — Feedback round 6 implemented; E2E in Chrome (390×844): auto-fill, notes → calendar, reorder, tonnage chart.
 - 2026-10-25 — Phases 7–8 on `fullstack`: server skeleton + accounts; tests green, `docker compose up` and sign-up/login/logout verified in Chrome.
+- 2026-10-25 — In-app invite links (owner only) added; E2E in Chrome: owner mints link, friend signs up from it, friend has no invite button.

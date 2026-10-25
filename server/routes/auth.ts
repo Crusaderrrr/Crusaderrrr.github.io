@@ -56,22 +56,24 @@ export function authRoutes(sql: Sql): Hono<AuthEnv> {
       // Invite first: without a valid one a stranger can't even probe which usernames exist.
       const invites = await tx`SELECT code FROM invite WHERE code = ${code} AND used_by IS NULL FOR UPDATE`;
       if (!invites.length) return 'invalid_invite' as const;
-      const users = await tx<{ id: string }[]>`
-        INSERT INTO app_user (username, password_hash) VALUES (${username}, ${passwordHash})
-        ON CONFLICT (lower(username)) DO NOTHING RETURNING id`;
-      const id = users[0]?.id;
-      if (!id) return 'username_taken' as const;
-      await tx`UPDATE invite SET used_by = ${id}, used_at = now() WHERE code = ${code}`;
-      await tx`INSERT INTO user_settings (user_id) VALUES (${id})`;
-      return Number(id);
+      // The first account ever created is the owner.
+      const users = await tx<{ id: string; is_admin: boolean }[]>`
+        INSERT INTO app_user (username, password_hash, is_admin)
+        VALUES (${username}, ${passwordHash}, NOT EXISTS (SELECT 1 FROM app_user))
+        ON CONFLICT (lower(username)) DO NOTHING RETURNING id, is_admin`;
+      const created = users[0];
+      if (!created) return 'username_taken' as const;
+      await tx`UPDATE invite SET used_by = ${created.id}, used_at = now() WHERE code = ${code}`;
+      await tx`INSERT INTO user_settings (user_id) VALUES (${created.id})`;
+      return { id: Number(created.id), isAdmin: created.is_admin };
     });
     if (result === 'invalid_invite') {
       return c.json({ error: result, message: 'That invite code is invalid or already used.' }, 400);
     }
     if (result === 'username_taken') return c.json({ error: result, message: 'That username is taken.' }, 409);
 
-    setSessionCookie(c, await createSession(sql, result));
-    return c.json({ user: { id: result, username } }, 201);
+    setSessionCookie(c, await createSession(sql, result.id));
+    return c.json({ user: { id: result.id, username, isAdmin: result.isAdmin } }, 201);
   });
 
   app.post('/login', async (c) => {
@@ -82,15 +84,15 @@ export function authRoutes(sql: Sql): Hono<AuthEnv> {
     if (!loginLimit.attempt(key)) {
       return c.json({ error: 'rate_limited', message: 'Too many attempts. Try again in 15 minutes.' }, 429);
     }
-    const rows = await sql<{ id: string; username: string; password_hash: string }[]>`
-      SELECT id, username, password_hash FROM app_user WHERE lower(username) = lower(${username.trim()})`;
+    const rows = await sql<{ id: string; username: string; password_hash: string; is_admin: boolean }[]>`
+      SELECT id, username, password_hash, is_admin FROM app_user WHERE lower(username) = lower(${username.trim()})`;
     const row = rows[0];
     if (!(await verifyPassword(row?.password_hash, password)) || !row) {
       return c.json({ error: 'invalid_credentials', message: 'Wrong username or password.' }, 401);
     }
     loginLimit.reset(key);
     setSessionCookie(c, await createSession(sql, Number(row.id)));
-    return c.json({ user: { id: Number(row.id), username: row.username } });
+    return c.json({ user: { id: Number(row.id), username: row.username, isAdmin: row.is_admin } });
   });
 
   app.post('/logout', async (c) => {

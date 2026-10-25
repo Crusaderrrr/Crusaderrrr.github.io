@@ -7,6 +7,7 @@ import { useDbQuery } from '../../hooks/useDbQuery';
 import { getDefaultRest, setDefaultRest } from '../../repositories/exercises';
 import { countExercises, getMeta } from '../../repositories/meta';
 import { useAuth } from '../auth/AuthGate';
+import InviteSheet from './InviteSheet';
 import { backupOverdue, exportBackup, importBackup, lastBackupAt } from './backup';
 
 export default function SettingsScreen() {
@@ -24,6 +25,7 @@ export default function SettingsScreen() {
   const defaultRest = useDbQuery(getDefaultRest, []);
   const [restSheet, setRestSheet] = useState(false);
   const { user, logout } = useAuth();
+  const [inviteSheet, setInviteSheet] = useState(false);
 
   const doExport = async () => {
     try {
@@ -58,6 +60,11 @@ export default function SettingsScreen() {
         <div className={`${card} overflow-hidden`}>
           <Row icon="check" iconBg="bg-green-600" title="Signed in as" detail={user.username} />
         </div>
+        {user.isAdmin && (
+          <button className={btn.secondary} onClick={() => setInviteSheet(true)}>
+            Invite a friend
+          </button>
+        )}
         <button
           className={btn.danger}
           onClick={() => confirm('Log out of this device?') && void logout().catch((e: unknown) => setMessage(`Log out failed: ${e}`))}
@@ -134,6 +141,8 @@ export default function SettingsScreen() {
           Trust The Process · Exercise photos: free-exercise-db (public domain) · Icons: Material Symbols
         </p>
       </section>
+
+      {inviteSheet && <InviteSheet onClose={() => setInviteSheet(false)} />}
 
       {restSheet && (
         <Sheet title="Default rest timer" onClose={() => setRestSheet(false)}>

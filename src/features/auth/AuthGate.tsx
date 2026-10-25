@@ -71,11 +71,18 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   return <AuthContext value={{ user: gate.user, logout }}>{children}</AuthContext>;
 }
 
+// An invite link looks like `/#/signup?invite=ABCD-EFGH-2345`.
+function inviteFromHash(): string | null {
+  const [route, query = ''] = location.hash.slice(1).split('?');
+  return route === '/signup' ? (new URLSearchParams(query).get('invite') ?? '') : null;
+}
+
 function AuthScreen({ onAuthed }: { onAuthed: (user: authApi.User) => void }) {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [linkInvite] = useState(inviteFromHash);
+  const [mode, setMode] = useState<'login' | 'signup'>(linkInvite === null ? 'login' : 'signup');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [invite, setInvite] = useState('');
+  const [invite, setInvite] = useState(linkInvite ?? '');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 

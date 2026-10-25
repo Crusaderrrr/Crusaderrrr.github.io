@@ -41,7 +41,7 @@ describe('sign-up', () => {
     expect(set).toMatch(/SameSite=Lax/i);
 
     const me = await app.request('/api/auth/me', { headers: { cookie: `${COOKIE}=${cookieOf(res)}` } });
-    expect(await me.json()).toEqual({ user: { id: expect.any(Number), username: 'Nikita' } });
+    expect(await me.json()).toEqual({ user: { id: expect.any(Number), username: 'Nikita', isAdmin: true } });
 
     const settings = await sql`SELECT * FROM user_settings`;
     expect(settings).toHaveLength(1);

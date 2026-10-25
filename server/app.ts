@@ -6,6 +6,7 @@ import { secureHeaders } from 'hono/secure-headers';
 import type { AuthEnv } from './auth.js';
 import type { Sql } from './db.js';
 import { authRoutes } from './routes/auth.js';
+import { inviteRoutes } from './routes/invites.js';
 
 export function createApp(sql: Sql, staticDir: string): Hono<AuthEnv> {
   const app = new Hono<AuthEnv>();
@@ -50,6 +51,7 @@ export function createApp(sql: Sql, staticDir: string): Hono<AuthEnv> {
     }
   });
   app.route('/api/auth', authRoutes(sql));
+  app.route('/api/invites', inviteRoutes(sql));
   app.all('/api/*', (c) => c.json({ error: 'not_found' }, 404));
 
   // Hashed build assets never change; everything else (index.html, sw.js, manifest) must revalidate
