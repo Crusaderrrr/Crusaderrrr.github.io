@@ -2,3 +2,5 @@ node_modules
 dist
 *.local
 .idea
+dist-server
+.env
