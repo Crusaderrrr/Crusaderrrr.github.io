@@ -121,6 +121,12 @@ Live URL: https://crusaderrrr.github.io/
 - [x] E2E in Chrome (390×844): go offline → fill set + mark done → banner shows, copy in localStorage → back online → synced, banner and copy gone; a stale pending copy is saved on reload
 - Not covered: adding/replacing an exercise offline (needs the exercise list + "Previous" from the server); a 4xx refusal drops the local copy
 
+### Phase 11 — Import a v1 backup ✅ (UI not yet clicked through in a browser)
+- [x] `POST /api/import` (`server/routes/import.ts`, 20 MB body limit for this route only): one transaction; settings, exercises (matched by name to the account's library, custom ones created), workouts, plan, skips. Ids derive from (account, v1 id), so importing the same file again replaces instead of duplicating. The backup's unfinished workout is left out if the account already has one in progress. Tests in `import.test.ts`
+- [x] `src/db/v1reader.worker.ts` reads the `.sqlite3` in memory with sqlite-wasm (no migration, so any v1 schema version 1–7 works) and builds the JSON; Settings → Data → **Import a v1 backup**
+- [x] Checked with the real backup (`ttp-2026-10-25.sqlite3`, v7): reader output posted to a real server twice → 1 workout, plan Mon–Fri, skip 22 Oct, default rest 180 s, 3 favourites, no duplicates
+- [ ] Click-through of the file picker in a browser (Chrome tool was unavailable)
+
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
 - Rest-timer beep on iOS (Web Audio is muted while the ringer switch is on silent).
@@ -138,3 +144,4 @@ Live URL: https://crusaderrrr.github.io/
 - 2026-10-25 — In-app invite links (owner only) added; E2E in Chrome: owner mints link, friend signs up from it, friend has no invite button.
 - 2026-10-25 — Phase 9 (API + client) on `fullstack`: workouts as documents, per-account data; E2E in Chrome.
 - 2026-10-25 — Phase 10 (local-first active workout) on `fullstack`: local copy, debounced sync with retry, offline banner.
+- 2026-10-25 — Phase 11 (v1 backup import) on `fullstack`: API + worker reader + Settings button; real backup imported twice against the dev DB.
