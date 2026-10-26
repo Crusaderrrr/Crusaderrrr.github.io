@@ -89,7 +89,7 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Tonnage chart (per week / per workout) on History; ranges 1M / 3M / 1Y / 3Y; per-exercise charts use the same ranges
 - [x] Reorder exercises: drag-and-drop sheet (replaces Move up/down)
 - [x] Per-session exercise note (migration 7); shown in History detail and the calendar day sheet
-- Notifications: options discussed in chat, not implemented
+- Notifications: implemented 2026-10-26 (see below)
 
 ## v2 self-hosted full-stack (branch `fullstack`, see `MIGRATION.md`)
 ### Phase 7 — Server skeleton ✅
@@ -136,6 +136,9 @@ Live URL: https://crusaderrrr.github.io/
 - iPhone check of Phases 1–6 (owner).
 - Rest-timer beep on iOS (Web Audio is muted while the ringer switch is on silent).
 - Missed-day banner end-to-end (needs a plan older than the missed day; logic is unit tested).
+- "Time's up" notification on iPhone (needs iOS 16.4+ and the app installed to the home screen;
+  permission is requested on the first set completion each session and only fires while the
+  app is open — same foreground limit as the beep, see SPEC §7).
 
 ## Log
 - 2026-10-22 — Spec reviewed; renamed to Trust The Process / `ttp`; schema + gotcha fixes.
@@ -151,3 +154,7 @@ Live URL: https://crusaderrrr.github.io/
 - 2026-10-25 — Phase 10 (local-first active workout) on `fullstack`: local copy, debounced sync with retry, offline banner.
 - 2026-10-25 — Phase 11 (v1 backup import) on `fullstack`: API + worker reader + Settings button; real backup imported twice against the dev DB.
 - 2026-10-25 — Phase 12: `DEPLOY.md` written; the laptop steps themselves are not run yet.
+- 2026-10-26 — "Time's up" system notification on rest-timer end (`features/workout/notify.ts`),
+  alongside the existing beep; permission requested on first set completion. Uses the service
+  worker's `showNotification` (iOS home-screen PWAs don't support the `Notification()`
+  constructor directly). Not yet verified on the iPhone.
