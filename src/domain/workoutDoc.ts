@@ -103,14 +103,18 @@ const mapExercise = (w: WorkoutDetail, weId: string, fn: (e: WorkoutExercise) =>
   exercises: w.exercises.map((e) => (e.id === weId ? fn(e) : e)),
 });
 
-/** Adds exercises to the end, each with one empty set (like Hevy). */
+/**
+ * Adds exercises to the end. An exercise never logged before starts with one empty set (like
+ * Hevy); one logged before starts with the same number of sets as last time, prefilled with
+ * that set's weight/reps/type (counted as auto-filled, like a copied-forward "Add set").
+ */
 export function addExercises(
   w: WorkoutDetail,
-  items: { weId: string; setId: string; exercise: ExerciseInfo; grip: Grip | null; previous: SetValues[] }[],
+  items: { weId: string; setIds: string[]; exercise: ExerciseInfo; grip: Grip | null; previous: SetValues[] }[],
 ): WorkoutDetail {
   let position = Math.max(-1, ...w.exercises.map((e) => e.position)) + 1;
   const added = items.map(
-    ({ weId, setId, exercise: x, grip, previous }): WorkoutExercise => ({
+    ({ weId, setIds, exercise: x, grip, previous }): WorkoutExercise => ({
       id: weId,
       exerciseId: x.id,
       name: x.name,
@@ -123,7 +127,17 @@ export function addExercises(
       grip,
       note: null,
       position: position++,
-      sets: [emptySet(setId, 0)],
+      sets: previous.length
+        ? previous.map((p, i) => ({
+            ...emptySet(setIds[i]!, i),
+            setType: p.setType ?? 'normal',
+            weightKg: p.weightKg,
+            reps: p.reps,
+            speedKmh: p.speedKmh ?? null,
+            inclinePct: p.inclinePct ?? null,
+            autoFill: AUTO_WEIGHT | AUTO_REPS,
+          }))
+        : [emptySet(setIds[0]!, 0)],
       previous,
     }),
   );

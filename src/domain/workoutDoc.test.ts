@@ -28,7 +28,7 @@ const pushdown: ExerciseInfo = { ...row, id: 4, name: 'Pushdown', muscleGroup: '
 const base = () => newWorkout('w1', new Date('2026-10-25T08:00:00'), '2026-10-25');
 const item = (n: number, exercise: ExerciseInfo, grip: 'normal' | null = null) => ({
   weId: `we${n}`,
-  setId: `s${n}-0`,
+  setIds: [`s${n}-0`],
   exercise,
   grip,
   previous: [],

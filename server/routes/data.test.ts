@@ -296,7 +296,7 @@ describe('workouts', () => {
     for (const d of [older, newer, incomplete, today]) expect((await call('PUT', `/api/workouts/${d.id}`, bob, d)).status).toBe(200);
     const got = (await call('GET', `/api/workouts/${today.id}`, bob)).json.workout;
     // wide: same grip (older, 50x10) beats the newer narrow session
-    expect(got.exercises[0].previous).toEqual([{ weightKg: 50, reps: 10, speedKmh: null, inclinePct: null }]);
+    expect(got.exercises[0].previous).toEqual([{ weightKg: 50, reps: 10, speedKmh: null, inclinePct: null, setType: 'normal' }]);
     expect(got.exercises[1].previous.map((s: Json) => [s.weightKg, s.reps])).toEqual([[55, 8], [57.5, 6]]);
     // the same lookup is available for a new exercise being added to a workout
     const q = `grip=wide&date=2026-09-10&startedAt=${encodeURIComponent('2026-09-10T17:00:00.000Z')}`;

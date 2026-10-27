@@ -5,9 +5,16 @@ export type SetValuesJson = {
   reps: number | null;
   speedKmh: number | null;
   inclinePct: number | null;
+  setType: string;
 };
 
-type Row = { weight_kg: number | null; reps: number | null; speed_kmh: number | null; incline_pct: number | null };
+type Row = {
+  weight_kg: number | null;
+  reps: number | null;
+  speed_kmh: number | null;
+  incline_pct: number | null;
+  set_type: string;
+};
 
 /**
  * The "Previous" column: completed sets of the matching exercise in the latest finished workout
@@ -21,7 +28,7 @@ export async function previousSets(
   before: { date: string; startedAt: string; excludeWorkoutId: string | null },
 ): Promise<SetValuesJson[]> {
   const rows = await sql<Row[]>`
-    SELECT s.weight_kg, s.reps, s.speed_kmh, s.incline_pct
+    SELECT s.weight_kg, s.reps, s.speed_kmh, s.incline_pct, s.set_type
     FROM workout_set s
     WHERE s.completed AND s.workout_exercise_id = (
       SELECT we.id FROM workout_exercise we JOIN workout w ON w.id = we.workout_id
@@ -39,5 +46,6 @@ export async function previousSets(
     reps: r.reps,
     speedKmh: r.speed_kmh,
     inclinePct: r.incline_pct,
+    setType: r.set_type,
   }));
 }

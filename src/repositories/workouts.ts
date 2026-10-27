@@ -47,7 +47,10 @@ async function previousFor(w: WorkoutDetail, exerciseId: number, grip: Grip | nu
   return api<SetValues[]>('GET', `/exercises/${exerciseId}/previous?${q}`);
 }
 
-/** Adds exercises to the end, each with one empty set. Grip exercises start with the last grip used. */
+/**
+ * Adds exercises to the end. Grip exercises start with the last grip used. An exercise logged
+ * before starts with the same sets (count, weight/reps, type) as its last workout.
+ */
 export async function addExercises(workoutId: string, exerciseIds: number[]) {
   const w = await loadWorkout(workoutId);
   if (!w) return;
@@ -57,7 +60,9 @@ export async function addExercises(workoutId: string, exerciseIds: number[]) {
       const exercise = all.find((e) => e.id === id);
       if (!exercise) throw new Error('Exercise not found');
       const grip = exercise.gripSet ? (exercise.lastGrip ?? defaultGrip(exercise.gripSet)) : null;
-      return { weId: newId(), setId: newId(), exercise, grip, previous: await previousFor(w, id, grip) };
+      const previous = await previousFor(w, id, grip);
+      const setIds = previous.length ? previous.map(() => newId()) : [newId()];
+      return { weId: newId(), setIds, exercise, grip, previous };
     }),
   );
   return mutate(workoutId, (d) => doc.addExercises(d, items));

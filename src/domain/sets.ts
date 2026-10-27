@@ -16,6 +16,7 @@ export type SetValues = {
   reps: number | null;
   speedKmh?: number | null;
   inclinePct?: number | null;
+  setType?: SetType;
 };
 export type CompletedValues = { weightKg: number; reps: number; speedKmh: number | null; inclinePct: number | null };
 
