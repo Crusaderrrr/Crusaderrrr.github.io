@@ -26,7 +26,6 @@ import {
   type WorkoutExercise,
   type WorkoutSet,
 } from '../../repositories/workouts';
-import { unlockAudio } from './beep';
 import { requestNotificationPermission } from './notify';
 import SetRow, { CARDIO_GRID, SET_GRID, SET_TYPE_COLOR } from './SetRow';
 
@@ -59,7 +58,6 @@ export default function ExerciseCard({
       setTimeout(() => setShaking(null), 400);
       return;
     }
-    unlockAudio();
     requestNotificationPermission();
     void completeSet(workoutId, set.id, values, withRest ? { seconds: we.restSeconds } : undefined);
   };

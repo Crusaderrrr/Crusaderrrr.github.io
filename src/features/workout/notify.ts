@@ -1,7 +1,7 @@
 // iOS only shows Notification-API banners for home-screen PWAs via the service worker's
 // showNotification (the plain `new Notification()` constructor isn't supported there), and
 // permission must be requested from a user gesture — so this is called from the same tap that
-// unlocks audio (unlockAudio in beep.ts).
+// completes a set.
 export function requestNotificationPermission() {
   if ('Notification' in window && Notification.permission === 'default') {
     void Notification.requestPermission();
