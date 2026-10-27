@@ -2,13 +2,16 @@ import { useState } from 'react';
 import ExerciseThumb from '../../components/ExerciseThumb';
 import Icon from '../../components/Icon';
 import Sheet from '../../components/Sheet';
-import { btn, input, SectionTitle, Toggle } from '../../components/ui';
+import { btn, input, SectionTitle } from '../../components/ui';
 import {
   createExercise,
   EQUIPMENT,
+  GRIP_SET_NAMES,
+  GRIP_SETS,
   label,
   MUSCLE_GROUPS,
   type Equipment,
+  type GripSet,
   type MuscleGroup,
 } from '../../repositories/exercises';
 import { photoToDataUrl } from './photo';
@@ -23,13 +26,13 @@ export default function NewExerciseSheet({
   const [name, setName] = useState('');
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>('chest');
   const [equipment, setEquipment] = useState<Equipment>('barbell');
-  const [hasGrip, setHasGrip] = useState(false);
+  const [gripSet, setGripSet] = useState<GripSet | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const save = async () => {
     try {
-      const id = await createExercise({ name, muscleGroup, equipment, image, hasGrip });
+      const id = await createExercise({ name, muscleGroup, equipment, image, gripSet });
       onCreated?.(id);
       onClose();
     } catch (e) {
@@ -84,11 +87,8 @@ export default function NewExerciseSheet({
         </div>
         <div className="flex items-center gap-3 rounded-xl bg-neutral-800/60 px-3 py-2.5">
           <Icon name="grip" className="h-5 w-5 text-neutral-400" />
-          <span className="flex-1 text-sm">
-            Grip selector
-            <span className="block text-xs text-neutral-500">Wide / normal / narrow / parallel</span>
-          </span>
-          <Toggle on={hasGrip} onChange={setHasGrip} label="Grip selector" />
+          <span className="flex-1 text-sm">Grips</span>
+          <GripSetPicker value={gripSet} onChange={setGripSet} />
         </div>
         {error && <p className="text-sm text-red-400">{error}</p>}
         <button className={btn.primary} disabled={!name.trim()} onClick={save}>
@@ -97,5 +97,22 @@ export default function NewExerciseSheet({
         </button>
       </div>
     </Sheet>
+  );
+}
+
+/** Off / Back (wide, narrow, parallel…) / Triceps (rope, V-bar…): which grips an exercise offers. */
+export function GripSetPicker({ value, onChange }: { value: GripSet | null; onChange: (v: GripSet | null) => void }) {
+  const options: [GripSet | null, string][] = [
+    [null, 'Off'],
+    ...(Object.keys(GRIP_SETS) as GripSet[]).map((s): [GripSet, string] => [s, GRIP_SET_NAMES[s]]),
+  ];
+  return (
+    <div className="flex gap-1.5">
+      {options.map(([s, name]) => (
+        <button key={name} className={btn.chip(value === s)} onClick={() => onChange(s)}>
+          {name}
+        </button>
+      ))}
+    </div>
   );
 }

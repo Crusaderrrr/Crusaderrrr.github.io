@@ -102,9 +102,10 @@ describe('exercise library', () => {
       json.map((e: { name: string }) => e.name.toLowerCase()).sort(),
     );
     const byName = (n: string) => json.find((e: { name: string }) => e.name === n);
-    expect(byName('Lat Pulldown')).toMatchObject({ hasGrip: 1, isCardio: 0, isCustom: 0, restSeconds: 120, image: '/exercises/lat-pulldown.jpg' });
+    expect(byName('Lat Pulldown')).toMatchObject({ gripSet: 'back', isCardio: 0, isCustom: 0, restSeconds: 120, image: '/exercises/lat-pulldown.jpg' });
     expect(byName('Treadmill')).toMatchObject({ isCardio: 1, restSeconds: 0, muscleGroup: 'full_body' });
-    expect(byName('Dip').hasGrip).toBe(0);
+    expect(byName('Dip').gripSet).toBeNull();
+    expect(byName('Triceps Pushdown').gripSet).toBe('triceps');
   });
 
   it('keeps accounts apart', async () => {
@@ -123,16 +124,16 @@ describe('exercise library', () => {
       muscleGroup: 'legs',
       equipment: 'other',
       image: null,
-      hasGrip: false,
+      gripSet: null,
     });
     expect(made.status).toBe(201);
     expect(made.json).toMatchObject({ name: 'Sled Push', isCustom: 1, restSeconds: 120 });
 
-    const dup = await call('POST', '/api/exercises', ann, { name: 'sled PUSH', muscleGroup: 'legs', equipment: 'other', image: null, hasGrip: false });
+    const dup = await call('POST', '/api/exercises', ann, { name: 'sled PUSH', muscleGroup: 'legs', equipment: 'other', image: null, gripSet: null });
     expect(dup.status).toBe(409);
     expect(dup.json.message).toMatch(/already exists/);
     // another account may use the same name
-    expect((await call('POST', '/api/exercises', bob, { name: 'Sled Push', muscleGroup: 'legs', equipment: 'other', image: null, hasGrip: false })).status).toBe(201);
+    expect((await call('POST', '/api/exercises', bob, { name: 'Sled Push', muscleGroup: 'legs', equipment: 'other', image: null, gripSet: null })).status).toBe(201);
 
     expect((await call('DELETE', `/api/exercises/${made.json.id}`, ann)).json).toEqual({ result: 'deleted' });
     // seeded exercises are archived, never deleted
@@ -158,8 +159,8 @@ describe('exercise library', () => {
   });
 
   it('rejects bad input', async () => {
-    expect((await call('POST', '/api/exercises', ann, { name: '', muscleGroup: 'legs', equipment: 'other', image: null, hasGrip: false })).status).toBe(400);
-    expect((await call('POST', '/api/exercises', ann, { name: 'X', muscleGroup: 'tail', equipment: 'other', image: null, hasGrip: false })).status).toBe(400);
+    expect((await call('POST', '/api/exercises', ann, { name: '', muscleGroup: 'legs', equipment: 'other', image: null, gripSet: null })).status).toBe(400);
+    expect((await call('POST', '/api/exercises', ann, { name: 'X', muscleGroup: 'tail', equipment: 'other', image: null, gripSet: null })).status).toBe(400);
     expect((await call('PUT', '/api/settings', ann, { defaultRestSeconds: -5 })).status).toBe(400);
   });
 });
@@ -210,7 +211,7 @@ describe('workouts', () => {
       name: 'Barbell Bench Press',
       muscleGroup: 'chest',
       isCardio: 0,
-      hasGrip: 0,
+      gripSet: null,
       restCustom: 0,
       note: 'felt good',
       previous: [],

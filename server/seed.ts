@@ -2,8 +2,8 @@ import type { Sql, Tx } from './db.js';
 
 // The exercise library every new account starts with (copied per user, so favourites, rest, grip,
 // photo and archive state stay per account). Photos live in public/exercises/<slug>.jpg.
-// [name, muscle group, equipment, photo slug, offers grip selector]
-const LIBRARY: [string, string, string, string, boolean?][] = [
+// [name, muscle group, equipment, photo slug, grip set]
+const LIBRARY: [string, string, string, string, ('back' | 'triceps')?][] = [
   ['Barbell Bench Press', 'chest', 'barbell', 'barbell-bench-press'],
   ['Incline Barbell Bench Press', 'chest', 'barbell', 'incline-barbell-bench-press'],
   ['Dumbbell Bench Press', 'chest', 'dumbbell', 'dumbbell-bench-press'],
@@ -16,11 +16,11 @@ const LIBRARY: [string, string, string, string, boolean?][] = [
   ['Deadlift', 'back', 'barbell', 'deadlift'],
   ['Barbell Row', 'back', 'barbell', 'barbell-row'],
   ['Dumbbell Row', 'back', 'dumbbell', 'dumbbell-row'],
-  ['Pull-Up', 'back', 'bodyweight', 'pull-up', true],
+  ['Pull-Up', 'back', 'bodyweight', 'pull-up', 'back'],
   ['Chin-Up', 'back', 'bodyweight', 'chin-up'],
-  ['Lat Pulldown', 'back', 'cable', 'lat-pulldown', true],
-  ['Seated Cable Row', 'back', 'cable', 'seated-cable-row', true],
-  ['T-Bar Row', 'back', 'barbell', 't-bar-row', true],
+  ['Lat Pulldown', 'back', 'cable', 'lat-pulldown', 'back'],
+  ['Seated Cable Row', 'back', 'cable', 'seated-cable-row', 'back'],
+  ['T-Bar Row', 'back', 'barbell', 't-bar-row', 'back'],
   ['Face Pull', 'shoulders', 'cable', 'face-pull'],
   ['Overhead Press', 'shoulders', 'barbell', 'overhead-press'],
   ['Seated Dumbbell Shoulder Press', 'shoulders', 'dumbbell', 'seated-dumbbell-shoulder-press'],
@@ -33,8 +33,8 @@ const LIBRARY: [string, string, string, string, boolean?][] = [
   ['Hammer Curl', 'biceps', 'dumbbell', 'hammer-curl'],
   ['Preacher Curl', 'biceps', 'machine', 'preacher-curl'],
   ['Cable Curl', 'biceps', 'cable', 'cable-curl'],
-  ['Triceps Pushdown', 'triceps', 'cable', 'triceps-pushdown'],
-  ['Overhead Triceps Extension', 'triceps', 'cable', 'overhead-triceps-extension'],
+  ['Triceps Pushdown', 'triceps', 'cable', 'triceps-pushdown', 'triceps'],
+  ['Overhead Triceps Extension', 'triceps', 'cable', 'overhead-triceps-extension', 'triceps'],
   ['Skull Crusher', 'triceps', 'barbell', 'skull-crusher'],
   ['Close-Grip Bench Press', 'triceps', 'barbell', 'close-grip-bench-press'],
   ['Back Squat', 'legs', 'barbell', 'back-squat'],
@@ -61,16 +61,16 @@ const LIBRARY: [string, string, string, string, boolean?][] = [
 export const DEFAULT_REST_SECONDS = 120;
 
 export async function seedExercises(tx: Sql | Tx, userId: number | string): Promise<void> {
-  const rows = LIBRARY.map(([name, muscle_group, equipment, slug, hasGrip]) => ({
+  const rows = LIBRARY.map(([name, muscle_group, equipment, slug, gripSet]) => ({
     user_id: userId,
     name,
     muscle_group,
     equipment,
     image: `/exercises/${slug}.jpg`,
-    has_grip: hasGrip ?? false,
+    grip_set: gripSet ?? null,
     rest_seconds: DEFAULT_REST_SECONDS,
   }));
-  await tx`INSERT INTO exercise ${tx(rows, 'user_id', 'name', 'muscle_group', 'equipment', 'image', 'has_grip', 'rest_seconds')}`;
+  await tx`INSERT INTO exercise ${tx(rows, 'user_id', 'name', 'muscle_group', 'equipment', 'image', 'grip_set', 'rest_seconds')}`;
   // Cardio: sets log time / speed / incline; rest timer off by default.
   await tx`INSERT INTO exercise (user_id, name, muscle_group, equipment, is_cardio, rest_seconds, rest_custom)
            VALUES (${userId}, 'Treadmill', 'full_body', 'machine', true, 0, true)`;

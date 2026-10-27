@@ -40,6 +40,8 @@ const backup = (over: Record<string, unknown> = {}) => ({
   exercises: [
     { name: 'barbell bench press', muscleGroup: 'chest', equipment: 'barbell', isCustom: 0, archived: 0, restSeconds: 150, restCustom: 1, favorite: 1, image: null, hasGrip: 0, isCardio: 0 },
     { name: 'Zercher Squat', muscleGroup: 'legs', equipment: 'barbell', isCustom: 1, archived: 0, restSeconds: 120, restCustom: 0, favorite: 0, image: null, hasGrip: 0, isCardio: 0 },
+    { name: 'Triceps Pushdown', muscleGroup: 'triceps', equipment: 'cable', isCustom: 0, archived: 0, restSeconds: 120, restCustom: 0, favorite: 0, image: null, hasGrip: 0, isCardio: 0 },
+    { name: 'Lat Pulldown', muscleGroup: 'back', equipment: 'cable', isCustom: 0, archived: 0, restSeconds: 120, restCustom: 0, favorite: 0, image: null, hasGrip: 0, isCardio: 0 },
   ],
   workouts: [
     {
@@ -83,6 +85,9 @@ describe('POST /api/import', () => {
     const bench = exercises.find((e: { name: string }) => e.name === 'Barbell Bench Press');
     expect(bench).toMatchObject({ favorite: 1, restSeconds: 150, restCustom: 1 });
     expect(exercises.find((e: { name: string }) => e.name === 'Zercher Squat')).toMatchObject({ isCustom: 1 });
+    // v1 had back grips only: turning them off clears a back set, a triceps set stays
+    expect(exercises.find((e: { name: string }) => e.name === 'Triceps Pushdown').gripSet).toBe('triceps');
+    expect(exercises.find((e: { name: string }) => e.name === 'Lat Pulldown').gripSet).toBeNull();
     expect((await call('GET', '/api/history')).json).toHaveLength(1);
     expect((await call('GET', '/api/plan')).json).toEqual([{ effectiveFrom: '2026-10-22', weekdays: [1, 3, 5] }]);
     expect((await call('GET', '/api/skips?from=2026-10-01&to=2026-10-31')).json).toHaveLength(1);

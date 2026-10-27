@@ -69,7 +69,7 @@ async function loadWorkout(sql: Sql, uid: number, id: string) {
       image: string | null;
       rest_seconds: number;
       rest_custom: boolean;
-      has_grip: boolean;
+      grip_set: string | null;
       is_cardio: boolean;
       grip: string | null;
       note: string | null;
@@ -77,7 +77,7 @@ async function loadWorkout(sql: Sql, uid: number, id: string) {
     }[]
   >`
     SELECT we.id, we.exercise_id, e.name, e.muscle_group, e.image, e.rest_seconds, e.rest_custom,
-           e.has_grip, e.is_cardio, we.grip, we.note, we.position
+           e.grip_set, e.is_cardio, we.grip, we.note, we.position
     FROM workout_exercise we JOIN exercise e ON e.id = we.exercise_id
     WHERE we.workout_id = ${id} ORDER BY we.position, we.id`;
   const sets = await sql<
@@ -125,7 +125,7 @@ async function loadWorkout(sql: Sql, uid: number, id: string) {
         image: e.image,
         restSeconds: e.rest_seconds,
         restCustom: +e.rest_custom,
-        hasGrip: +e.has_grip,
+        gripSet: e.grip_set,
         isCardio: +e.is_cardio,
         grip: e.grip,
         note: e.note,

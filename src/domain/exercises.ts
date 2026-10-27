@@ -13,14 +13,28 @@ export const EQUIPMENT = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight
 export type MuscleGroup = (typeof MUSCLE_GROUPS)[number];
 export type Equipment = (typeof EQUIPMENT)[number];
 
-export const GRIPS = ['wide', 'normal', 'narrow', 'parallel_wide', 'parallel_normal'] as const;
-export type Grip = (typeof GRIPS)[number];
+/** Which grips an exercise offers: lat pulldown / rows vs triceps cable attachments. */
+export const GRIP_SETS = {
+  back: ['wide', 'normal', 'narrow', 'parallel_wide', 'parallel_normal'],
+  triceps: ['rope', 'v_bar', 'straight_bar'],
+} as const;
+export type GripSet = keyof typeof GRIP_SETS;
+export type Grip = (typeof GRIP_SETS)[GripSet][number];
+export const GRIP_SET_NAMES: Record<GripSet, string> = { back: 'Back', triceps: 'Triceps' };
+/** Every grip, for filters over history (each set's grips are distinct). */
+export const GRIPS: Grip[] = Object.values(GRIP_SETS).flat();
+/** Grip used when an exercise has none logged yet. */
+const DEFAULT_GRIP: Record<GripSet, Grip> = { back: 'normal', triceps: 'rope' };
+export const defaultGrip = (set: GripSet): Grip => DEFAULT_GRIP[set];
 export const GRIP_NAMES: Record<Grip, string> = {
   wide: 'Wide',
   normal: 'Normal',
   narrow: 'Narrow',
   parallel_wide: 'Parallel wide',
   parallel_normal: 'Parallel normal',
+  rope: 'Rope',
+  v_bar: 'V-bar',
+  straight_bar: 'Straight bar',
 };
 
 export const label = (s: string) => (s === 'full_body' ? 'Full body' : s[0]!.toUpperCase() + s.slice(1));
@@ -38,8 +52,8 @@ export type Exercise = {
   favorite: number;
   /** Bundled photo path or JPEG data URL; null → muscle-group icon. */
   image: string | null;
-  /** Offers the grip selector when logged (lat pulldown, rows…). */
-  hasGrip: number;
+  /** Grips offered when logged; null = no grip selector. */
+  gripSet: GripSet | null;
   /** Logs time / speed / incline instead of kg / reps (treadmill). */
   isCardio: number;
   /** Grip used the last time this exercise was logged (grip exercises only). */

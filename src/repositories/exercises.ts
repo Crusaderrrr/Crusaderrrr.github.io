@@ -2,20 +2,23 @@ import { api, ApiError } from '../api/client';
 import {
   EQUIPMENT,
   GRIP_NAMES,
+  GRIP_SET_NAMES,
+  GRIP_SETS,
   GRIPS,
   label,
   MUSCLE_GROUPS,
   type Equipment,
   type Exercise,
   type Grip,
+  type GripSet,
   type MuscleGroup,
 } from '../domain/exercises';
 import { patchExerciseInfo } from '../domain/workoutDoc';
 import { dropCleanDocs, patchOpenDocs } from './workoutStore';
 
 // The exercise types and constants live in domain/; re-exported so screens import from one place.
-export { EQUIPMENT, GRIP_NAMES, GRIPS, label, MUSCLE_GROUPS };
-export type { Equipment, Exercise, Grip, MuscleGroup };
+export { EQUIPMENT, GRIP_NAMES, GRIP_SET_NAMES, GRIP_SETS, GRIPS, label, MUSCLE_GROUPS };
+export type { Equipment, Exercise, Grip, GripSet, MuscleGroup };
 
 export const listExercises = (archived = false): Promise<Exercise[]> =>
   api<Exercise[]>('GET', `/exercises${archived ? '?archived=1' : ''}`);
@@ -34,7 +37,7 @@ export async function createExercise(e: {
   muscleGroup: MuscleGroup;
   equipment: Equipment;
   image: string | null;
-  hasGrip: boolean;
+  gripSet: GripSet | null;
 }): Promise<number> {
   return (await api<Exercise>('POST', '/exercises', e)).id;
 }
@@ -48,9 +51,9 @@ const patch = (id: number, body: object) => api<Exercise>('PATCH', `/exercises/$
 
 export const unarchiveExercise = (id: number) => patch(id, { archived: false });
 
-export async function setHasGrip(id: number, hasGrip: boolean) {
-  await patch(id, { hasGrip });
-  patchOpenDocs((w) => patchExerciseInfo(w, id, { hasGrip: hasGrip ? 1 : 0 }));
+export async function setGripSet(id: number, gripSet: GripSet | null) {
+  await patch(id, { gripSet });
+  patchOpenDocs((w) => patchExerciseInfo(w, id, { gripSet }));
 }
 
 export async function setExerciseImage(id: number, image: string | null) {

@@ -21,8 +21,9 @@ import {
   type WorkoutDetail,
 } from './workoutDoc';
 
-const bench: ExerciseInfo = { id: 1, name: 'Bench', muscleGroup: 'chest', image: null, restSeconds: 120, restCustom: 0, hasGrip: 0, isCardio: 0 };
-const row: ExerciseInfo = { id: 2, name: 'Row', muscleGroup: 'back', image: null, restSeconds: 90, restCustom: 1, hasGrip: 1, isCardio: 0 };
+const bench: ExerciseInfo = { id: 1, name: 'Bench', muscleGroup: 'chest', image: null, restSeconds: 120, restCustom: 0, gripSet: null, isCardio: 0 };
+const row: ExerciseInfo = { id: 2, name: 'Row', muscleGroup: 'back', image: null, restSeconds: 90, restCustom: 1, gripSet: 'back', isCardio: 0 };
+const pushdown: ExerciseInfo = { ...row, id: 4, name: 'Pushdown', muscleGroup: 'triceps', gripSet: 'triceps' };
 
 const base = () => newWorkout('w1', new Date('2026-10-25T08:00:00'), '2026-10-25');
 const item = (n: number, exercise: ExerciseInfo, grip: 'normal' | null = null) => ({
@@ -64,7 +65,7 @@ describe('exercises', () => {
     expect(sets(w, 1)).toEqual([expect.objectContaining({ id: 's2-0', position: 0, completed: 0, weightKg: null, setType: 'normal' })]);
   });
 
-  it('replaces the exercise but keeps sets; grip survives only between grip exercises', () => {
+  it('replaces the exercise but keeps sets; grip survives only within the same grip set', () => {
     let w = addExercises(base(), [item(1, row, 'normal')]);
     w = setGrip(w, 'we1', 'narrow', [{ weightKg: 40, reps: 10 }]);
     expect(w.exercises[0]).toMatchObject({ grip: 'narrow', previous: [{ weightKg: 40, reps: 10 }] });
@@ -75,6 +76,8 @@ describe('exercises', () => {
     // a grip exercise that had no grip yet starts at "normal"
     const noGrip = replaceExercise(addExercises(base(), [item(1, bench)]), 'we1', row, []);
     expect(noGrip.exercises[0]!.grip).toBe('normal');
+    // another grip set starts at that set's first grip
+    expect(replaceExercise(w, 'we1', pushdown, []).exercises[0]).toMatchObject({ gripSet: 'triceps', grip: 'rope' });
   });
 
   it('removes, reorders and notes', () => {

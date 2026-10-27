@@ -10,7 +10,7 @@ import { useDbQuery } from '../../hooks/useDbQuery';
 import {
   getDefaultRest,
   GRIP_NAMES,
-  GRIPS,
+  GRIP_SETS,
   resetRestSeconds,
   setRestSeconds,
 } from '../../repositories/exercises';
@@ -170,7 +170,8 @@ export default function ExerciseCard({
       {sheet === 'grip' && (
         <Sheet title="Grip" onClose={close}>
           <div className="flex flex-col gap-2 pb-2">
-            {GRIPS.map((g) => (
+            {/* a doc cached before grip sets existed has no gripSet; its grips were all back grips */}
+            {GRIP_SETS[we.gripSet ?? 'back'].map((g) => (
               <button
                 key={g}
                 className={`${btn.secondary} justify-between ${g === we.grip ? 'ring-2 ring-green-500 ring-inset' : ''}`}

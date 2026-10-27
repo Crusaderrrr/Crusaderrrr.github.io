@@ -109,16 +109,18 @@ async function importAll(sql: Sql, uid: number, b: Body) {
       const id = byName.get(e.name.toLowerCase());
       const photo = e.image?.startsWith('data:image/') ? e.image : null;
       if (id) {
+        // v1 only had back grips, so a triceps grip set from the seed library is left alone.
         await tx`
           UPDATE exercise SET favorite = ${!!e.favorite}, archived = ${!!e.archived}, rest_seconds = ${e.restSeconds},
-            rest_custom = ${!!e.restCustom}, has_grip = ${!!e.hasGrip}, image = COALESCE(${photo}, image)
+            rest_custom = ${!!e.restCustom}, image = COALESCE(${photo}, image),
+            grip_set = CASE WHEN ${!!e.hasGrip} THEN 'back' WHEN grip_set = 'back' THEN NULL ELSE grip_set END
           WHERE id = ${id} AND user_id = ${uid}`;
       } else {
         const [row] = await tx<{ id: string }[]>`
           INSERT INTO exercise (user_id, name, muscle_group, equipment, is_custom, archived, rest_seconds, rest_custom,
-                                favorite, image, has_grip, is_cardio)
+                                favorite, image, grip_set, is_cardio)
           VALUES (${uid}, ${e.name}, ${e.muscleGroup}, ${e.equipment}, ${!!e.isCustom}, ${!!e.archived}, ${e.restSeconds},
-                  ${!!e.restCustom}, ${!!e.favorite}, ${e.image}, ${!!e.hasGrip}, ${!!e.isCardio}) RETURNING id`;
+                  ${!!e.restCustom}, ${!!e.favorite}, ${e.image}, ${e.hasGrip ? 'back' : null}, ${!!e.isCardio}) RETURNING id`;
         byName.set(e.name.toLowerCase(), Number(row!.id));
         exercisesCreated++;
       }

@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useParams } from 'react-router';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import Icon from '../../components/Icon';
 import MuscleIcon from '../../components/MuscleIcon';
-import { BackButton, btn, card, Row, SectionTitle, Toggle } from '../../components/ui';
+import { BackButton, btn, card, Row, SectionTitle } from '../../components/ui';
 import { parseLocalDate, today } from '../../domain/dates';
 import { personalRecords, RANGES, rangeStart, sessionStats, type Range, type SessionStats } from '../../domain/progress';
 import { formatSet, formatWeight, setLabels } from '../../domain/sets';
@@ -16,11 +16,12 @@ import {
   removeExercise,
   setExerciseImage,
   setFavorite,
-  setHasGrip,
+  setGripSet,
   unarchiveExercise,
   type Grip,
 } from '../../repositories/exercises';
 import { sessionsByExercise } from '../../repositories/progress';
+import { GripSetPicker } from '../exercises/NewExerciseSheet';
 import { photoToDataUrl } from '../exercises/photo';
 import { formatDate } from '../history/HistoryScreen';
 import { SET_TYPE_COLOR } from '../workout/SetRow';
@@ -197,8 +198,8 @@ export default function ExerciseProgressScreen() {
             <Row icon="image" iconBg="bg-neutral-600" title="Remove photo" onClick={() => setExerciseImage(id, null)} />
           )}
           {!exercise.isCardio && (
-            <Row icon="grip" iconBg="bg-violet-600" title="Grip selector">
-              <Toggle on={!!exercise.hasGrip} onChange={(v) => setHasGrip(id, v)} label="Grip selector" />
+            <Row icon="grip" iconBg="bg-violet-600" title="Grips">
+              <GripSetPicker value={exercise.gripSet} onChange={(v) => setGripSet(id, v)} />
             </Row>
           )}
           {exercise.archived ? (

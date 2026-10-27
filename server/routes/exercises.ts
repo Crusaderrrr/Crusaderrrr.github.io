@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { Sql } from '../db.js';
 import { previousSets } from '../previous.js';
-import { DATE_RE, EQUIPMENT, GRIPS, isUniqueViolation, MUSCLE_GROUPS, parseBody, privateRouter, userId } from './util.js';
+import { DATE_RE, EQUIPMENT, GRIP_SETS, GRIPS, isUniqueViolation, MUSCLE_GROUPS, parseBody, privateRouter, userId } from './util.js';
 
 type ExerciseRow = {
   id: string;
@@ -14,14 +14,14 @@ type ExerciseRow = {
   rest_custom: boolean;
   favorite: boolean;
   image: string | null;
-  has_grip: boolean;
+  grip_set: string | null;
   is_cardio: boolean;
   last_grip: string | null;
 };
 
 const COLS = `id, name, muscle_group, equipment, is_custom, archived, rest_seconds, rest_custom, favorite, image,
-  has_grip, is_cardio,
-  CASE WHEN exercise.has_grip THEN (
+  grip_set, is_cardio,
+  CASE WHEN exercise.grip_set IS NOT NULL THEN (
     SELECT we.grip FROM workout_exercise we JOIN workout w ON w.id = we.workout_id
     WHERE we.exercise_id = exercise.id AND we.grip IS NOT NULL ORDER BY w.started_at DESC, we.position DESC LIMIT 1
   ) END AS last_grip`;
@@ -38,7 +38,7 @@ export const exerciseJson = (r: ExerciseRow) => ({
   restCustom: +r.rest_custom,
   favorite: +r.favorite,
   image: r.image,
-  hasGrip: +r.has_grip,
+  gripSet: r.grip_set,
   isCardio: +r.is_cardio,
   lastGrip: r.last_grip,
 });
@@ -48,12 +48,12 @@ const createBody = z.object({
   muscleGroup: z.enum(MUSCLE_GROUPS),
   equipment: z.enum(EQUIPMENT),
   image: z.string().startsWith('data:image/').nullable(),
-  hasGrip: z.boolean(),
+  gripSet: z.enum(GRIP_SETS).nullable(),
 });
 
 const patchBody = z.object({
   favorite: z.boolean().optional(),
-  hasGrip: z.boolean().optional(),
+  gripSet: z.enum(GRIP_SETS).nullable().optional(),
   archived: z.boolean().optional(),
   image: z.string().startsWith('data:image/').nullable().optional(),
   // A number pins the rest for this exercise; null makes it follow the default again.
@@ -83,8 +83,8 @@ export function exerciseRoutes(sql: Sql) {
     if (error) return error;
     try {
       const rows = await sql<ExerciseRow[]>`
-        INSERT INTO exercise (user_id, name, muscle_group, equipment, is_custom, image, has_grip, rest_seconds)
-        VALUES (${userId(c)}, ${data.name}, ${data.muscleGroup}, ${data.equipment}, true, ${data.image}, ${data.hasGrip},
+        INSERT INTO exercise (user_id, name, muscle_group, equipment, is_custom, image, grip_set, rest_seconds)
+        VALUES (${userId(c)}, ${data.name}, ${data.muscleGroup}, ${data.equipment}, true, ${data.image}, ${data.gripSet},
                 COALESCE((SELECT default_rest_seconds FROM user_settings WHERE user_id = ${userId(c)}), 120))
         RETURNING ${sql.unsafe(COLS)}`;
       return c.json(exerciseJson(rows[0]!), 201);
@@ -112,7 +112,7 @@ export function exerciseRoutes(sql: Sql) {
       if (!own.length) return false;
       const plain = {
         ...(data.favorite !== undefined && { favorite: data.favorite }),
-        ...(data.hasGrip !== undefined && { has_grip: data.hasGrip }),
+        ...(data.gripSet !== undefined && { grip_set: data.gripSet }),
         ...(data.archived !== undefined && { archived: data.archived }),
         ...(data.image !== undefined && { image: data.image }),
       };

@@ -1,6 +1,6 @@
 import { api } from '../api/client';
 import { parseLocalDate, today } from '../domain/dates';
-import type { Exercise, Grip } from '../domain/exercises';
+import { defaultGrip, type Exercise, type Grip } from '../domain/exercises';
 import type { CompletedValues, SetType, SetValues } from '../domain/sets';
 import * as doc from '../domain/workoutDoc';
 import type { Workout, WorkoutDetail } from '../domain/workoutDoc';
@@ -56,7 +56,7 @@ export async function addExercises(workoutId: string, exerciseIds: number[]) {
     exerciseIds.map(async (id) => {
       const exercise = all.find((e) => e.id === id);
       if (!exercise) throw new Error('Exercise not found');
-      const grip = exercise.hasGrip ? (exercise.lastGrip ?? 'normal') : null;
+      const grip = exercise.gripSet ? (exercise.lastGrip ?? defaultGrip(exercise.gripSet)) : null;
       return { weId: newId(), setId: newId(), exercise, grip, previous: await previousFor(w, id, grip) };
     }),
   );
@@ -72,7 +72,7 @@ export async function replaceExercise(workoutId: string, weId: string, exerciseI
   if (!w || !current) return;
   const exercise = (await api<Exercise[]>('GET', '/exercises')).find((e) => e.id === exerciseId);
   if (!exercise) throw new Error('Exercise not found');
-  const previous = await previousFor(w, exerciseId, exercise.hasGrip ? (current.grip ?? 'normal') : null);
+  const previous = await previousFor(w, exerciseId, doc.replacedGrip(current, exercise.gripSet));
   return mutate(workoutId, (d) => doc.replaceExercise(d, weId, exercise, previous));
 }
 
