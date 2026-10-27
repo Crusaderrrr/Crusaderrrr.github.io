@@ -1,9 +1,9 @@
 name: CI
 
-# The Pages deploy (deploy.yml) only runs on main; this checks the fullstack branch and PRs.
+# Checks main and PRs (GitHub Pages is retired; v2 is self-hosted, see DEPLOY.md).
 on:
   push:
-    branches: [fullstack]
+    branches: [main]
   pull_request:
 
 jobs:
