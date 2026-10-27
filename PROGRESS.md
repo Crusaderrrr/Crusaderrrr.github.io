@@ -84,12 +84,12 @@ Live URL: https://crusaderrrr.github.io/
 
 ## Feedback round 6 (2026-10-24) ✅
 - [x] Red delete background no longer bleeds through set rows (only mounted while swiped)
-- [x] Rest-timer end: screen flash removed (beep kept; there were no other sounds)
+- [x] Rest-timer end: screen flash removed (beep later removed too, see 2026-10-27 — system notification is the only signal now)
 - [x] Weight/reps auto-propagate to later incomplete sets; dimmed until edited/completed (migration 7)
 - [x] Tonnage chart (per week / per workout) on History; ranges 1M / 3M / 1Y / 3Y; per-exercise charts use the same ranges
 - [x] Reorder exercises: drag-and-drop sheet (replaces Move up/down)
 - [x] Per-session exercise note (migration 7); shown in History detail and the calendar day sheet
-- Notifications: options discussed in chat, not implemented
+- [x] Notifications: real "time's up" system notification (see log); sounds removed
 
 ## v2 self-hosted full-stack (branch `fullstack`, see `MIGRATION.md`)
 ### Phase 7 — Server skeleton ✅
@@ -134,7 +134,6 @@ Live URL: https://crusaderrrr.github.io/
 
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
-- Rest-timer beep on iOS (Web Audio is muted while the ringer switch is on silent).
 - Missed-day banner end-to-end (needs a plan older than the missed day; logic is unit tested).
 
 ## Log
@@ -151,4 +150,12 @@ Live URL: https://crusaderrrr.github.io/
 - 2026-10-25 — Phase 10 (local-first active workout) on `fullstack`: local copy, debounced sync with retry, offline banner.
 - 2026-10-25 — Phase 11 (v1 backup import) on `fullstack`: API + worker reader + Settings button; real backup imported twice against the dev DB.
 - 2026-10-25 — Phase 12: `DEPLOY.md` written; the laptop steps themselves are not run yet.
+- 2026-10-26 — "Time's up" system notification on rest-timer end (`features/workout/notify.ts`);
+  permission requested on first set completion. Uses the service worker's `showNotification`
+  (iOS home-screen PWAs don't support the `Notification()` constructor directly). Verified
+  working on two iPhones.
 - 2026-10-27 — Grip sets: exercises offer back grips or triceps attachments (rope / V-bar / straight bar); migration 004; tests green. `fullstack` merged into `main`.
+- 2026-10-27 — Removed all in-app sounds (the rest-timer beep); the system notification from
+  2026-10-26 is now the only "time's up" signal. New sets added for a previously-logged exercise
+  are now prefilled (count, weight, reps, set type) from that exercise's last workout instead of
+  starting as one empty set.

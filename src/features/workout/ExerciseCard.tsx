@@ -27,6 +27,7 @@ import {
   type WorkoutSet,
 } from '../../repositories/workouts';
 import { unlockAudio } from './beep';
+import { requestNotificationPermission } from './notify';
 import SetRow, { CARDIO_GRID, SET_GRID, SET_TYPE_COLOR } from './SetRow';
 
 const SET_TYPE_LETTER: Record<SetType, string> = { normal: '1', warmup: 'W', drop: 'D', failure: 'F' };
@@ -59,6 +60,7 @@ export default function ExerciseCard({
       return;
     }
     unlockAudio();
+    requestNotificationPermission();
     void completeSet(workoutId, set.id, values, withRest ? { seconds: we.restSeconds } : undefined);
   };
 

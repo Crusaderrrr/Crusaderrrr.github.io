@@ -6,6 +6,10 @@
 html,
 body {
   height: 100%;
+  /* iOS standalone PWA: a percentage-height chain under `position: fixed` (below) can resolve
+     very slightly short of the real screen, leaving a gap above the home indicator under the
+     tab bar. `100dvh` ties directly to the true visual viewport (safe areas included). */
+  height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
 }
@@ -23,6 +27,7 @@ body {
 
 #root {
   height: 100%;
+  height: 100dvh;
 }
 
 .scroll-area {

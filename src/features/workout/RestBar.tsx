@@ -4,6 +4,7 @@ import { formatClock } from '../../domain/workout';
 import { useNow } from '../../hooks/useDbQuery';
 import { updateWorkout } from '../../repositories/workouts';
 import { beep } from './beep';
+import { notifyTimesUp } from './notify';
 
 /**
  * Countdown derived from the persisted rest_ends_at, so it survives reloads. The "time's up"
@@ -19,6 +20,7 @@ export default function RestBar({ workoutId, endsAt }: { workoutId: string; ends
     if (remaining > 0 || document.visibilityState !== 'visible' || fired.current === endsAt) return;
     fired.current = endsAt; // ticks keep coming until the cleared value reloads
     beep();
+    notifyTimesUp();
     void updateWorkout(workoutId, { restEndsAt: null });
   }, [remaining, workoutId, endsAt]);
 
