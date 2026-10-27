@@ -151,3 +151,4 @@ Live URL: https://crusaderrrr.github.io/
 - 2026-10-25 — Phase 10 (local-first active workout) on `fullstack`: local copy, debounced sync with retry, offline banner.
 - 2026-10-25 — Phase 11 (v1 backup import) on `fullstack`: API + worker reader + Settings button; real backup imported twice against the dev DB.
 - 2026-10-25 — Phase 12: `DEPLOY.md` written; the laptop steps themselves are not run yet.
+- 2026-10-27 — Grip sets: exercises offer back grips or triceps attachments (rope / V-bar / straight bar); migration 004; tests green. `fullstack` merged into `main`.
