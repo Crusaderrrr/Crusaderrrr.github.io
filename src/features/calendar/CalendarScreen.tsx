@@ -4,6 +4,7 @@ import Icon from '../../components/Icon';
 import Sheet from '../../components/Sheet';
 import { btn, card, PageHeader, SectionTitle } from '../../components/ui';
 import { monthGrid, type DayStatus } from '../../domain/calendar';
+import { RATING_COLOR } from '../../domain/checkIn';
 import { today, toLocalDate } from '../../domain/dates';
 import { SKIP_REASON_NAMES, type SkipReason } from '../../repositories/skips';
 import { logPastWorkout } from '../../repositories/workouts';
@@ -30,6 +31,18 @@ export const STATUS_NAME: Record<DayStatus, string> = {
 };
 
 const LEGEND: DayStatus[] = ['done', 'extra', 'planned', 'skipped', 'missed'];
+
+/** Done days get a tick and skipped days a bar instead of a fill; the others keep their fill. */
+const isMarked = (s: DayStatus) => s === 'done' || s === 'extra' || s === 'skipped';
+
+/** Legend / day-sheet marker: a small tick or bar for marked statuses, the usual dot otherwise. */
+function StatusMark({ status }: { status: DayStatus }) {
+  if (status === 'skipped') return <span className="h-1.5 w-3 shrink-0 rounded-sm bg-amber-500" />;
+  if (status === 'done' || status === 'extra') {
+    return <Icon name="check" className={`h-4 w-4 text-green-500 ${status === 'extra' ? 'opacity-60' : ''}`} />;
+  }
+  return <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATUS_STYLE[status]}`} />;
+}
 
 export default function CalendarScreen() {
   const now = new Date();
@@ -91,15 +104,32 @@ export default function CalendarScreen() {
           ))}
           {cells.map((date, i) => {
             const d = date ? byDate.get(date) : undefined;
+            const marked = d && isMarked(d.status);
             return date ? (
               <button
                 key={date}
-                className={`relative aspect-square rounded-xl text-sm font-medium ${d ? STATUS_STYLE[d.status] : ''} ${
-                  date === t ? 'font-bold outline-2 outline-offset-1 outline-white' : ''
-                }`}
+                className={`relative aspect-square overflow-hidden rounded-xl text-sm font-medium ${
+                  marked ? 'ring-2 ring-inset ring-neutral-700' : d ? STATUS_STYLE[d.status] : ''
+                } ${date === t ? 'font-bold outline-2 outline-offset-1 outline-white' : ''}`}
                 onClick={() => setOpen(date)}
               >
-                {Number(date.slice(8))}
+                {d?.status === 'skipped' && <span className="absolute inset-x-0 top-[38%] h-[22%] bg-amber-500" />}
+                {(d?.status === 'done' || d?.status === 'extra') && (
+                  <Icon
+                    name="check"
+                    className={`absolute inset-0 h-full w-full text-green-500 ${d.status === 'extra' ? 'opacity-60' : ''}`}
+                  />
+                )}
+                {d?.mood && (
+                  <span
+                    className="absolute left-1/2 top-1 h-2 w-2 -translate-x-1/2 rounded-full"
+                    style={{ background: RATING_COLOR[d.mood] }}
+                  />
+                )}
+                {/* Marked days keep the number small in the corner, clear of the tick and bar. */}
+                <span className={marked ? 'absolute bottom-0.5 left-1.5 text-[10px] text-neutral-300' : ''}>
+                  {Number(date.slice(8))}
+                </span>
               </button>
             ) : (
               <span key={`pad${i}`} />
@@ -109,7 +139,7 @@ export default function CalendarScreen() {
         <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-neutral-400">
           {LEGEND.map((s) => (
             <span key={s} className="flex items-center gap-1">
-              <span className={`h-2.5 w-2.5 rounded-full ${STATUS_STYLE[s]}`} />
+              <StatusMark status={s} />
               {STATUS_NAME[s]}
             </span>
           ))}
@@ -169,7 +199,7 @@ export function DaySheet({ day, onClose }: { day: DayInfo; onClose: () => void }
     <Sheet title={formatDate(day.date)} onClose={onClose}>
       <div className="flex flex-col gap-2 pb-2">
         <p className="flex items-center gap-2 text-neutral-400">
-          <span className={`h-2.5 w-2.5 rounded-full ${STATUS_STYLE[day.status]}`} />
+          <StatusMark status={day.status} />
           {STATUS_NAME[day.status]}
           {day.skip && ` · ${SKIP_REASON_NAMES[day.skip.reason]}${day.skip.note ? ` — ${day.skip.note}` : ''}`}
         </p>

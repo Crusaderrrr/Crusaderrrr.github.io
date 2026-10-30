@@ -1,3 +1,4 @@
+import type { Rating } from '../../domain/checkIn';
 import { datesBetween, dayStatus, isPlanned, type DayStatus } from '../../domain/calendar';
 import { today } from '../../domain/dates';
 import { useDbQuery } from '../../hooks/useDbQuery';
@@ -11,6 +12,8 @@ export type DayInfo = {
   status: DayStatus;
   workouts: { id: string; title: string; notes: { name: string; note: string }[] }[];
   skip: Skip | undefined;
+  /** Optional mood mark: the day's last rated workout, or the skip's rating. */
+  mood: Rating | null;
 };
 
 /** Status of every day in [from, to] (SPEC §5.1). */
@@ -31,6 +34,7 @@ export function useDays(from: string, to: string): DayInfo[] | undefined {
         planned,
         workouts: ws,
         skip,
+        mood: ws.findLast((w) => w.rating)?.rating ?? skip?.rating ?? null,
         status: dayStatus({ date, today: t, planned, done: ws.length > 0, skipped: !!skip }),
       };
     });
