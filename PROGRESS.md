@@ -142,6 +142,11 @@ Live URL: https://crusaderrrr.github.io/
 - [x] "Import a v1 backup" removed (button, worker, `POST /api/import`, DEPLOY step). `src/db/` is now unused
 - Checked in Chrome (390×844): calendar marks, Cardio filter, check-in chips. Not clicked through: the New exercise sheet with Cardio, the skip sheet's mood, a cardio finish
 
+## Rest-timer push (2026-10-30)
+- [x] Server sends a Web Push at `rest_ends_at` (`server/push.ts`, `/api/push`, migration 007; `web-push` added with your OK). Saving a workout schedules it, finishing/clearing/deleting cancels, restart restores
+- [x] Client registers the device on the first completed set (`notify.ts`); `public/push-sw.js` shows the notification
+- [ ] Not verified: real delivery. Chrome in this setup can't grant notification permission, and iPhone push needs HTTPS (Funnel). Scheduler, cancel/reschedule, gone-subscription cleanup and the endpoint allow-list are unit tested with a fake sender
+
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
 - Missed-day banner end-to-end (needs a plan older than the missed day; logic is unit tested).
@@ -171,3 +176,4 @@ Live URL: https://crusaderrrr.github.io/
   starting as one empty set.
 - 2026-10-30 — Feedback round 7: set-edit and week-label fixes, Cardio category, cardio-aware duration,
   optional check-in + calendar marks, v1 import removed.
+- 2026-10-30 — Rest-timer Web Push: notification now comes with the app closed / phone locked (needs deploy + iPhone check).

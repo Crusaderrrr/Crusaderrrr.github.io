@@ -33,6 +33,8 @@ export default defineConfig({
       workbox: {
         // Without *.wasm the app opens offline but the DB never starts (SPEC §7).
         globPatterns: ['**/*.{js,css,html,wasm,png,svg,jpg}'],
+        // Web Push handler (public/push-sw.js): shows the rest timer's "Time's up" while the app is closed.
+        importScripts: ['push-sw.js'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // SW scope is the whole origin; don't hijack navigations to other Pages repos.
         navigateFallbackAllowlist: [/^\/$/, /^\/index\.html$/],

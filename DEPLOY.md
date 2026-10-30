@@ -138,6 +138,17 @@ Open the URL in Safari → Share → **Add to Home Screen**. The address is the 
 URL is a new app with no data, so settle on the hostname before you add it.
 
 
+
+### Rest-timer notifications with the app closed
+The "Time's up" notification is a Web Push sent by the server, so it arrives with the app closed
+or the phone locked. Needs iOS 16.4+, the app **added to the Home Screen**, notifications
+allowed (the app asks on your first completed set) and the HTTPS address above — push does not
+work over plain `http://` on a LAN address. Nothing to configure: the server creates its key pair
+on first use. Optionally set `VAPID_SUBJECT` in `.env` to your own `mailto:you@example.com`
+(Apple wants a plausible contact; the default is a placeholder). A phone that is switched off
+gets nothing: the push expires after 2 minutes instead of arriving late. If it stops working,
+turn notifications off and on again for the app in iOS Settings, then complete a set.
+
 ## 8. Nightly backups
 Postgres data lives in the `pgdata` Docker volume on this one disk. A dump every night, keeping 14.
 
