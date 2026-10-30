@@ -43,14 +43,19 @@ function fromBase64Url(s: string): Uint8Array<ArrayBuffer> {
   return Uint8Array.from(bin, (c) => c.charCodeAt(0));
 }
 
-export function notifyTimesUp() {
+/**
+ * In-app fallback for devices without push. A device registered for Web Push gets the notification
+ * from the server (also while the app is closed), so showing this one too — e.g. when you return
+ * to the app after the rest ended — would be a second notification for the same rest.
+ */
+export async function notifyTimesUp() {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   if (!('serviceWorker' in navigator)) return;
-  void navigator.serviceWorker.ready.then((reg) =>
-    reg.showNotification("Time's up!", {
-      body: 'Rest is over — back to it.',
-      icon: '/icon-192.png',
-      tag: 'ttp-rest-timer',
-    }),
-  );
+  const reg = await navigator.serviceWorker.ready;
+  if (await reg.pushManager?.getSubscription()) return;
+  await reg.showNotification("Time's up!", {
+    body: 'Rest is over — back to it.',
+    icon: '/icon-192.png',
+    tag: 'ttp-rest-timer',
+  });
 }

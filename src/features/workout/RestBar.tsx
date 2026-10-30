@@ -18,7 +18,7 @@ export default function RestBar({ workoutId, endsAt }: { workoutId: string; ends
   useEffect(() => {
     if (remaining > 0 || document.visibilityState !== 'visible' || fired.current === endsAt) return;
     fired.current = endsAt; // ticks keep coming until the cleared value reloads
-    notifyTimesUp();
+    void notifyTimesUp();
     void updateWorkout(workoutId, { restEndsAt: null });
   }, [remaining, workoutId, endsAt]);
 
