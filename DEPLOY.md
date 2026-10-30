@@ -137,12 +137,6 @@ Turn it off with `sudo tailscale funnel --bg off 3000` (or `tailscale funnel res
 Open the URL in Safari → Share → **Add to Home Screen**. The address is the app's identity: a new
 URL is a new app with no data, so settle on the hostname before you add it.
 
-### Move your v1 data
-1. In the **old** app (`https://crusaderrrr.github.io/`): Settings → Export database.
-2. In the **new** app, signed in to your account: Settings → Data → **Import a v1 backup**, pick the
-   `.sqlite3` file. Importing the same file twice is safe (it replaces, it doesn't duplicate).
-
-Keep the old site up until you have confirmed the imported history looks right.
 
 ## 8. Nightly backups
 Postgres data lives in the `pgdata` Docker volume on this one disk. A dump every night, keeping 14.

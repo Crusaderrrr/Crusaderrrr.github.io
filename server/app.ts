@@ -7,7 +7,6 @@ import type { AuthEnv } from './auth.js';
 import type { Sql } from './db.js';
 import { authRoutes } from './routes/auth.js';
 import { exerciseRoutes } from './routes/exercises.js';
-import { importRoutes } from './routes/import.js';
 import { inviteRoutes } from './routes/invites.js';
 import { planRoutes, settingsRoutes, skipRoutes } from './routes/planning.js';
 import { historyRoutes, progressRoutes, workoutRoutes } from './routes/workouts.js';
@@ -34,10 +33,8 @@ export function createApp(sql: Sql, staticDir: string): Hono<AuthEnv> {
     }),
   );
 
-  // Exercise photos are the largest legitimate body, except a whole v1 backup.
-  const small = bodyLimit({ maxSize: 2 * 1024 * 1024, onError: (c) => c.json({ error: 'too_large' }, 413) });
-  const backup = bodyLimit({ maxSize: 20 * 1024 * 1024, onError: (c) => c.json({ error: 'too_large' }, 413) });
-  app.use('/api/*', (c, next) => (c.req.path === '/api/import' ? backup(c, next) : small(c, next)));
+  // Exercise photos are the largest legitimate body.
+  app.use('/api/*', bodyLimit({ maxSize: 2 * 1024 * 1024, onError: (c) => c.json({ error: 'too_large' }, 413) }));
   // Cross-site forms can't send application/json, and a cross-site fetch that does needs a CORS
   // preflight we never grant: the CSRF defence on top of SameSite=Lax.
   app.use('/api/*', async (c, next) => {
@@ -59,7 +56,6 @@ export function createApp(sql: Sql, staticDir: string): Hono<AuthEnv> {
   app.route('/api/auth', authRoutes(sql));
   app.route('/api/invites', inviteRoutes(sql));
   app.route('/api/exercises', exerciseRoutes(sql));
-  app.route('/api/import', importRoutes(sql));
   app.route('/api/settings', settingsRoutes(sql));
   app.route('/api/plan', planRoutes(sql));
   app.route('/api/skips', skipRoutes(sql));
