@@ -1,3 +1,4 @@
+import type { Feeling, Rating } from './checkIn';
 import { toLocalDate } from './dates';
 import { defaultGrip, type Exercise, type Grip, type GripSet, type MuscleGroup } from './exercises';
 import { nextSetValues, type CompletedValues, type SetType, type SetValues } from './sets';
@@ -14,6 +15,9 @@ export type Workout = {
   finishedAt: string | null;
   notes: string | null;
   restEndsAt: string | null;
+  /** Optional check-in after the workout. */
+  rating: Rating | null;
+  feelings: Feeling[];
 };
 
 export type WorkoutSet = {
@@ -75,6 +79,8 @@ export function newWorkout(id: string, now: Date, today: string): WorkoutDetail 
     finishedAt: null,
     notes: null,
     restEndsAt: null,
+    rating: null,
+    feelings: [],
     exercises: [],
   };
 }
@@ -303,7 +309,7 @@ export const uncompleteSet = (w: WorkoutDetail, setId: string): WorkoutDetail =>
 export function finalizeWorkout(
   w: WorkoutDetail,
   toComplete: (CompletedValues & { id: string })[],
-  fields: { title?: string; notes?: string | null; finishedAt?: string },
+  fields: { title?: string; notes?: string | null; finishedAt?: string; rating?: Rating | null; feelings?: Feeling[] },
 ): WorkoutDetail {
   const values = new Map(toComplete.map((c) => [c.id, c]));
   const exercises = w.exercises
@@ -318,6 +324,8 @@ export function finalizeWorkout(
     title: fields.title ?? w.title,
     notes: fields.notes ?? w.notes,
     finishedAt: fields.finishedAt ?? w.finishedAt,
+    rating: fields.rating ?? w.rating ?? null,
+    feelings: fields.feelings ?? w.feelings ?? [],
     restEndsAt: null,
   };
 }

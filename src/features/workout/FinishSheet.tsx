@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import Icon from '../../components/Icon';
+import RatingPicker from '../../components/RatingPicker';
 import Sheet from '../../components/Sheet';
 import { btn, card, input, Stat } from '../../components/ui';
+import { FEELING_NAMES, FEELINGS, type Feeling, type Rating } from '../../domain/checkIn';
 import { prCountByWorkout } from '../../domain/progress';
 import { completeValues, formatWeight } from '../../domain/sets';
 import { finishedAtFor, formatDuration, summarize } from '../../domain/workout';
@@ -40,6 +42,8 @@ export default function FinishSheet({
 
   const [title, setTitle] = useState(workout.title);
   const [notes, setNotes] = useState(workout.notes ?? '');
+  const [rating, setRating] = useState<Rating | null>(null);
+  const [feelings, setFeelings] = useState<Feeling[]>([]);
   const now = useNow();
 
   const prs = useDbQuery(
@@ -99,12 +103,37 @@ export default function FinishSheet({
           <Stat icon="sets" label="Sets" value={String(summary.sets)} />
           <Stat icon="trophy" label="PRs" value={prs === undefined ? '…' : String(prs)} />
         </div>
+        <div className="flex flex-col gap-2">
+          <span className="text-sm text-neutral-400">How was it? (optional)</span>
+          <RatingPicker
+            value={rating}
+            onChange={(r) => {
+              setRating(r);
+              if (!r) setFeelings([]);
+            }}
+          />
+          {rating && (
+            <div className="flex flex-wrap gap-2">
+              {FEELINGS.map((f) => (
+                <button
+                  key={f}
+                  className={btn.chip(feelings.includes(f))}
+                  onClick={() => setFeelings((cur) => (cur.includes(f) ? cur.filter((x) => x !== f) : [...cur, f]))}
+                >
+                  {FEELING_NAMES[f]}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <button
           className={btn.primary}
           onClick={async () => {
             await finalizeWorkout(workout.id, [], {
               title: title.trim() || workout.title,
               notes,
+              rating,
+              feelings,
               finishedAt: finishedAtFor(workout, Date.now()),
             });
             onFinished();

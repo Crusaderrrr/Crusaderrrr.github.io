@@ -1,5 +1,6 @@
 import { api } from '../api/client';
 import { parseLocalDate, today } from '../domain/dates';
+import type { Rating } from '../domain/checkIn';
 import { defaultGrip, type Exercise, type Grip } from '../domain/exercises';
 import type { CompletedValues, SetType, SetValues } from '../domain/sets';
 import * as doc from '../domain/workoutDoc';
@@ -122,7 +123,7 @@ export const uncompleteSet = (workoutId: string, setId: string) =>
 export const finalizeWorkout = (
   workoutId: string,
   complete: (CompletedValues & { id: string })[],
-  fields: { title?: string; notes?: string | null; finishedAt?: string },
+  fields: Parameters<typeof doc.finalizeWorkout>[2],
 ) => mutate(workoutId, (w) => doc.finalizeWorkout(w, complete, fields));
 
 // ---- lists (always from the server) ----
@@ -140,7 +141,7 @@ export async function listHistory(): Promise<HistoryItem[]> {
 /** Finished workouts in a date range (for the calendar), with their per-exercise notes. */
 export async function workoutsBetween(from: string, to: string) {
   await settled();
-  return api<{ id: string; title: string; date: string; notes: { workoutId: string; name: string; note: string }[] }[]>(
+  return api<{ id: string; title: string; date: string; rating: Rating | null; notes: { workoutId: string; name: string; note: string }[] }[]>(
     'GET',
     `/workouts?from=${from}&to=${to}`,
   );

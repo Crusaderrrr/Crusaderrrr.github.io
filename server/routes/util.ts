@@ -36,6 +36,18 @@ export const MUSCLE_GROUPS = ['chest', 'back', 'shoulders', 'biceps', 'triceps',
 export const EQUIPMENT = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'kettlebell', 'other'] as const;
 export const GRIP_SETS = ['back', 'triceps'] as const;
 export const GRIPS = ['wide', 'normal', 'narrow', 'parallel_wide', 'parallel_normal', 'rope', 'v_bar', 'straight_bar'] as const;
+export const RATINGS = ['good', 'okay', 'bad'] as const;
+export const FEELINGS = [
+  'poor_sleep',
+  'slept_well',
+  'ate_badly',
+  'ate_well',
+  'bad_mood',
+  'good_mood',
+  'stressed',
+  'low_energy',
+  'felt_strong',
+] as const;
 export const SET_TYPES = ['normal', 'warmup', 'drop', 'failure'] as const;
 export const SKIP_REASONS = ['sick', 'injury', 'tired', 'no_time', 'travel', 'chose_not_to', 'other'] as const;
 

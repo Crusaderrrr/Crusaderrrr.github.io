@@ -190,9 +190,13 @@ describe('plan and skips', () => {
     await call('PUT', '/api/skips/2026-10-03', ann, { reason: 'travel', note: 'Rome' });
     await call('PUT', '/api/skips/2026-10-09', ann, { reason: 'tired', note: null });
     expect((await call('GET', '/api/skips?from=2026-10-01&to=2026-10-05', ann)).json).toEqual([
-      { date: '2026-10-03', reason: 'travel', note: 'Rome' },
+      { date: '2026-10-03', reason: 'travel', note: 'Rome', rating: null },
     ]);
     expect((await call('GET', '/api/skips?from=2026-10-01&to=2026-10-31', bob)).json).toEqual([]);
+    // the mood of a skipped day is optional and replaced on every save
+    await call('PUT', '/api/skips/2026-10-09', ann, { reason: 'tired', note: null, rating: 'okay' });
+    expect((await call('GET', '/api/skips?from=2026-10-09&to=2026-10-09', ann)).json[0]).toMatchObject({ rating: 'okay' });
+    expect((await call('PUT', '/api/skips/2026-10-09', ann, { reason: 'tired', note: null, rating: 'meh' })).status).toBe(400);
     await call('DELETE', '/api/skips/2026-10-09', ann);
     expect((await call('GET', '/api/skips?from=2026-10-01&to=2026-10-31', ann)).json).toHaveLength(1);
     expect((await call('PUT', '/api/skips/2026-10-03', ann, { reason: 'nope', note: null })).status).toBe(400);
@@ -201,6 +205,20 @@ describe('plan and skips', () => {
 });
 
 describe('workouts', () => {
+  it('stores the optional check-in and returns the rating for the calendar', async () => {
+    const bench = await exerciseId(ann, 'Barbell Bench Press');
+    const w = doc([{ exerciseId: bench, sets: [{ weightKg: 60, reps: 8 }] }], { rating: 'bad', feelings: ['poor_sleep', 'stressed'] });
+    expect((await call('PUT', `/api/workouts/${w.id}`, ann, w)).status).toBe(200);
+    expect((await call('GET', `/api/workouts/${w.id}`, ann)).json.workout).toMatchObject({ rating: 'bad', feelings: ['poor_sleep', 'stressed'] });
+    expect((await call('GET', '/api/workouts?from=2026-10-20&to=2026-10-20', ann)).json[0]).toMatchObject({ rating: 'bad' });
+    // a document without a check-in (saved before it existed) is a workout with no mark
+    const old = doc([{ exerciseId: bench, sets: [{ weightKg: 50, reps: 5 }] }], { date: '2026-10-21' });
+    await call('PUT', `/api/workouts/${old.id}`, ann, old);
+    expect((await call('GET', `/api/workouts/${old.id}`, ann)).json.workout).toMatchObject({ rating: null, feelings: [] });
+    const bad = { ...w, rating: 'awful' };
+    expect((await call('PUT', `/api/workouts/${w.id}`, ann, bad)).status).toBe(400);
+  });
+
   it('stores a workout document and reads it back whole', async () => {
     const bench = await exerciseId(ann, 'Barbell Bench Press');
     const w = doc([{ exerciseId: bench, sets: [{ weightKg: 60, reps: 8 }, { weightKg: 62.5, reps: 6, setType: 'warmup' }], note: 'felt good' }], {
@@ -378,7 +396,7 @@ describe('history, calendar and progress', () => {
     await call('PUT', `/api/workouts/${w.id}`, ann, w);
     const { json } = await call('GET', '/api/workouts?from=2026-11-01&to=2026-11-30', ann);
     expect(json).toEqual([
-      { id: w.id, title: 'Evening Workout', date: '2026-11-05', notes: [{ workoutId: w.id, name: 'Overhead Press', note: 'shoulder twinge' }] },
+      { id: w.id, title: 'Evening Workout', date: '2026-11-05', rating: null, notes: [{ workoutId: w.id, name: 'Overhead Press', note: 'shoulder twinge' }] },
     ]);
     expect((await call('GET', '/api/workouts?from=2026-11-01&to=2026-11-30', bob)).json).toEqual([]);
   });

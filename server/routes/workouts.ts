@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { Sql } from '../db.js';
 import { previousSets, type SetValuesJson } from '../previous.js';
-import { DATE_RE, GRIPS, isUniqueViolation, iso, parseBody, privateRouter, SET_TYPES, userId } from './util.js';
+import { DATE_RE, FEELINGS, GRIPS, isUniqueViolation, iso, parseBody, privateRouter, RATINGS, SET_TYPES, userId } from './util.js';
 
 // A workout travels as one document: the workout, its exercises, their sets. The client edits the
 // document locally and saves it whole with PUT (MIGRATION.md §7); ids are client-generated UUIDs.
@@ -40,6 +40,9 @@ const workoutSchema = z.object({
   finishedAt: z.iso.datetime().nullable(),
   notes: z.string().max(5000).nullable(),
   restEndsAt: z.iso.datetime().nullable(),
+  // Defaults let a copy saved locally before the check-in existed still sync.
+  rating: z.enum(RATINGS).nullable().default(null),
+  feelings: z.array(z.enum(FEELINGS)).max(FEELINGS.length).default([]),
   exercises: z.array(exerciseSchema).max(100),
 });
 type WorkoutBody = z.infer<typeof workoutSchema>;
@@ -52,11 +55,13 @@ type WorkoutRow = {
   finished_at: Date | null;
   notes: string | null;
   rest_ends_at: Date | null;
+  rating: string | null;
+  feelings: string[];
 };
 
 async function loadWorkout(sql: Sql, uid: number, id: string) {
   const [w] = await sql<WorkoutRow[]>`
-    SELECT id, title, date, started_at, finished_at, notes, rest_ends_at
+    SELECT id, title, date, started_at, finished_at, notes, rest_ends_at, rating, feelings
     FROM workout WHERE id = ${id} AND user_id = ${uid}`;
   if (!w) return null;
 
@@ -116,6 +121,8 @@ async function loadWorkout(sql: Sql, uid: number, id: string) {
     finishedAt: iso(w.finished_at),
     notes: w.notes,
     restEndsAt: iso(w.rest_ends_at),
+    rating: w.rating,
+    feelings: w.feelings,
     exercises: await Promise.all(
       exercises.map(async (e) => ({
         id: e.id,
@@ -162,10 +169,12 @@ async function saveWorkout(sql: Sql, uid: number, w: WorkoutBody): Promise<'ok' 
     }
 
     await tx`
-      INSERT INTO workout (id, user_id, title, date, started_at, finished_at, notes, rest_ends_at)
-      VALUES (${w.id}, ${uid}, ${w.title}, ${w.date}, ${w.startedAt}, ${w.finishedAt}, ${w.notes}, ${w.restEndsAt})
+      INSERT INTO workout (id, user_id, title, date, started_at, finished_at, notes, rest_ends_at, rating, feelings)
+      VALUES (${w.id}, ${uid}, ${w.title}, ${w.date}, ${w.startedAt}, ${w.finishedAt}, ${w.notes}, ${w.restEndsAt},
+              ${w.rating}, ${tx.array(w.feelings, 1009 /* text[] */)})
       ON CONFLICT (id) DO UPDATE SET title = excluded.title, date = excluded.date, started_at = excluded.started_at,
-        finished_at = excluded.finished_at, notes = excluded.notes, rest_ends_at = excluded.rest_ends_at`;
+        finished_at = excluded.finished_at, notes = excluded.notes, rest_ends_at = excluded.rest_ends_at,
+        rating = excluded.rating, feelings = excluded.feelings`;
     // Starting or logging a workout on a day marked as skipped lifts the skip.
     if (!existing[0]) await tx`DELETE FROM skip WHERE user_id = ${uid} AND date = ${w.date}`;
 
@@ -211,8 +220,8 @@ export function workoutRoutes(sql: Sql) {
     const q = z.object({ from: z.string().regex(DATE_RE), to: z.string().regex(DATE_RE) }).safeParse(c.req.query());
     if (!q.success) return c.json({ error: 'invalid_input', message: 'from and to are required.' }, 400);
     const uid = userId(c);
-    const workouts = await sql<{ id: string; title: string; date: string }[]>`
-      SELECT id, title, date FROM workout
+    const workouts = await sql<{ id: string; title: string; date: string; rating: string | null }[]>`
+      SELECT id, title, date, rating FROM workout
       WHERE user_id = ${uid} AND finished_at IS NOT NULL AND date BETWEEN ${q.data.from} AND ${q.data.to}
       ORDER BY date, started_at`;
     const notes = await sql<{ workout_id: string; name: string; note: string }[]>`
@@ -275,7 +284,7 @@ export function historyRoutes(sql: Sql) {
   app.get('/', async (c) => {
     const uid = userId(c);
     const workouts = await sql<WorkoutRow[]>`
-      SELECT id, title, date, started_at, finished_at, notes, rest_ends_at FROM workout
+      SELECT id, title, date, started_at, finished_at, notes, rest_ends_at, rating, feelings FROM workout
       WHERE user_id = ${uid} AND finished_at IS NOT NULL ORDER BY date DESC, started_at DESC`;
     const rows = await sql<{ workout_id: string; name: string; grip: string | null; sets: string; volume: number }[]>`
       SELECT we.workout_id, e.name, we.grip, COUNT(s.id) AS sets,
@@ -296,6 +305,8 @@ export function historyRoutes(sql: Sql) {
           finishedAt: iso(w.finished_at),
           notes: w.notes,
           restEndsAt: iso(w.rest_ends_at),
+          rating: w.rating,
+          feelings: w.feelings,
           exercises: mine.map((r) => ({ name: r.name, sets: Number(r.sets), grip: r.grip })),
           volume: mine.reduce((a, r) => a + r.volume, 0),
         };

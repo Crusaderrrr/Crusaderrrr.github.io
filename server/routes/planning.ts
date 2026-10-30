@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { Sql } from '../db.js';
-import { DATE_RE, parseBody, privateRouter, SKIP_REASONS, userId } from './util.js';
+import { DATE_RE, parseBody, privateRouter, RATINGS, SKIP_REASONS, userId } from './util.js';
 
 const dateParam = z.string().regex(DATE_RE);
 
@@ -49,8 +49,8 @@ export function skipRoutes(sql: Sql) {
   app.get('/', async (c) => {
     const q = z.object({ from: dateParam, to: dateParam }).safeParse(c.req.query());
     if (!q.success) return c.json({ error: 'invalid_input', message: 'from and to are required.' }, 400);
-    const rows = await sql<{ date: string; reason: string; note: string | null }[]>`
-      SELECT date, reason, note FROM skip WHERE user_id = ${userId(c)} AND date BETWEEN ${q.data.from} AND ${q.data.to}`;
+    const rows = await sql<{ date: string; reason: string; note: string | null; rating: string | null }[]>`
+      SELECT date, reason, note, rating FROM skip WHERE user_id = ${userId(c)} AND date BETWEEN ${q.data.from} AND ${q.data.to}`;
     return c.json(rows);
   });
 
@@ -58,13 +58,18 @@ export function skipRoutes(sql: Sql) {
     const date = dateParam.safeParse(c.req.param('date'));
     const { data, error } = await parseBody(
       c,
-      z.object({ reason: z.enum(SKIP_REASONS), note: z.string().max(500).nullable() }),
+      z.object({
+        reason: z.enum(SKIP_REASONS),
+        note: z.string().max(500).nullable(),
+        rating: z.enum(RATINGS).nullable().default(null),
+      }),
     );
     if (!date.success) return c.json({ error: 'invalid_input', message: 'Bad date.' }, 400);
     if (error) return error;
     await sql`
-      INSERT INTO skip (user_id, date, reason, note) VALUES (${userId(c)}, ${date.data}, ${data.reason}, ${data.note})
-      ON CONFLICT (user_id, date) DO UPDATE SET reason = excluded.reason, note = excluded.note`;
+      INSERT INTO skip (user_id, date, reason, note, rating)
+      VALUES (${userId(c)}, ${date.data}, ${data.reason}, ${data.note}, ${data.rating})
+      ON CONFLICT (user_id, date) DO UPDATE SET reason = excluded.reason, note = excluded.note, rating = excluded.rating`;
     return c.json({ ok: true });
   });
 

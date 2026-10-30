@@ -1,4 +1,5 @@
 import { api } from '../api/client';
+import type { Rating } from '../domain/checkIn';
 
 export const SKIP_REASONS = ['sick', 'injury', 'tired', 'no_time', 'travel', 'chose_not_to', 'other'] as const;
 export type SkipReason = (typeof SKIP_REASONS)[number];
@@ -12,10 +13,10 @@ export const SKIP_REASON_NAMES: Record<SkipReason, string> = {
   other: 'Other',
 };
 
-export type Skip = { date: string; reason: SkipReason; note: string | null };
+export type Skip = { date: string; reason: SkipReason; note: string | null; rating: Rating | null };
 
 export const skipsBetween = (from: string, to: string) => api<Skip[]>('GET', `/skips?from=${from}&to=${to}`);
 
-export const saveSkip = (s: Skip) => api('PUT', `/skips/${s.date}`, { reason: s.reason, note: s.note });
+export const saveSkip = (s: Skip) => api('PUT', `/skips/${s.date}`, { reason: s.reason, note: s.note, rating: s.rating });
 
 export const removeSkip = (date: string) => api('DELETE', `/skips/${date}`);
