@@ -8,6 +8,7 @@ export const MUSCLE_GROUPS = [
   'glutes',
   'core',
   'full_body',
+  'cardio',
 ] as const;
 export const EQUIPMENT = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'kettlebell', 'other'] as const;
 export type MuscleGroup = (typeof MUSCLE_GROUPS)[number];

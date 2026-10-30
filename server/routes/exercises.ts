@@ -81,11 +81,16 @@ export function exerciseRoutes(sql: Sql) {
   app.post('/', async (c) => {
     const { data, error } = await parseBody(c, createBody);
     if (error) return error;
+    // The Cardio category makes an exercise time-based (time / speed / incline sets, no rest timer).
+    const cardio = data.muscleGroup === 'cardio';
     try {
       const rows = await sql<ExerciseRow[]>`
-        INSERT INTO exercise (user_id, name, muscle_group, equipment, is_custom, image, grip_set, rest_seconds)
-        VALUES (${userId(c)}, ${data.name}, ${data.muscleGroup}, ${data.equipment}, true, ${data.image}, ${data.gripSet},
-                COALESCE((SELECT default_rest_seconds FROM user_settings WHERE user_id = ${userId(c)}), 120))
+        INSERT INTO exercise (user_id, name, muscle_group, equipment, is_custom, image, grip_set, is_cardio,
+                              rest_seconds, rest_custom)
+        VALUES (${userId(c)}, ${data.name}, ${data.muscleGroup}, ${data.equipment}, true, ${data.image},
+                ${cardio ? null : data.gripSet}, ${cardio},
+                ${cardio ? 0 : sql`COALESCE((SELECT default_rest_seconds FROM user_settings WHERE user_id = ${userId(c)}), 120)`},
+                ${cardio})
         RETURNING ${sql.unsafe(COLS)}`;
       return c.json(exerciseJson(rows[0]!), 201);
     } catch (e) {

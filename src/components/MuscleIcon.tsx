@@ -15,6 +15,7 @@ const HIGHLIGHT: Record<MuscleGroup, Part[]> = {
   glutes: ['glutes'],
   core: ['abs'],
   full_body: ['pecs', 'abs', 'delts', 'upperArms', 'forearms', 'glutes', 'thighs', 'calves'],
+  cardio: ['pecs', 'abs', 'delts', 'upperArms', 'forearms', 'glutes', 'thighs', 'calves'],
 };
 const REAR: MuscleGroup[] = ['back', 'triceps', 'glutes'];
 

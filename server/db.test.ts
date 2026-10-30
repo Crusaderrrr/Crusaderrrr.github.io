@@ -1,3 +1,4 @@
+import { readdirSync } from 'node:fs';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -12,7 +13,7 @@ afterEach(() => drop());
 
 describe('migrate', () => {
   it('applies the real migrations once and is idempotent', async () => {
-    expect(await migrate(sql)).toEqual(['001_init.sql', '002_admin.sql', '003_data.sql', '004_grip_sets.sql']);
+    expect(await migrate(sql)).toEqual(readdirSync(path.resolve(import.meta.dirname, 'migrations')).sort());
     expect(await migrate(sql)).toEqual([]);
     const rows = await sql<{ n: string }[]>`SELECT count(*) AS n FROM app_user`;
     expect(rows[0]?.n).toBe('0');

@@ -32,7 +32,7 @@ export default function NewExerciseSheet({
 
   const save = async () => {
     try {
-      const id = await createExercise({ name, muscleGroup, equipment, image, gripSet });
+      const id = await createExercise({ name, muscleGroup, equipment, image, gripSet: muscleGroup === 'cardio' ? null : gripSet });
       onCreated?.(id);
       onClose();
     } catch (e) {
@@ -85,11 +85,13 @@ export default function NewExerciseSheet({
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl bg-neutral-800/60 px-3 py-2.5">
-          <Icon name="grip" className="h-5 w-5 text-neutral-400" />
-          <span className="flex-1 text-sm">Grips</span>
-          <GripSetPicker value={gripSet} onChange={setGripSet} />
-        </div>
+        {muscleGroup !== 'cardio' && (
+          <div className="flex items-center gap-3 rounded-xl bg-neutral-800/60 px-3 py-2.5">
+            <Icon name="grip" className="h-5 w-5 text-neutral-400" />
+            <span className="flex-1 text-sm">Grips</span>
+            <GripSetPicker value={gripSet} onChange={setGripSet} />
+          </div>
+        )}
         {error && <p className="text-sm text-red-400">{error}</p>}
         <button className={btn.primary} disabled={!name.trim()} onClick={save}>
           <Icon name="save" />

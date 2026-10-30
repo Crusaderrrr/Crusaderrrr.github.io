@@ -73,5 +73,5 @@ export async function seedExercises(tx: Sql | Tx, userId: number | string): Prom
   await tx`INSERT INTO exercise ${tx(rows, 'user_id', 'name', 'muscle_group', 'equipment', 'image', 'grip_set', 'rest_seconds')}`;
   // Cardio: sets log time / speed / incline; rest timer off by default.
   await tx`INSERT INTO exercise (user_id, name, muscle_group, equipment, is_cardio, rest_seconds, rest_custom)
-           VALUES (${userId}, 'Treadmill', 'full_body', 'machine', true, 0, true)`;
+           VALUES (${userId}, 'Treadmill', 'cardio', 'machine', true, 0, true)`;
 }

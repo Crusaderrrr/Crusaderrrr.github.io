@@ -103,7 +103,7 @@ describe('exercise library', () => {
     );
     const byName = (n: string) => json.find((e: { name: string }) => e.name === n);
     expect(byName('Lat Pulldown')).toMatchObject({ gripSet: 'back', isCardio: 0, isCustom: 0, restSeconds: 120, image: '/exercises/lat-pulldown.jpg' });
-    expect(byName('Treadmill')).toMatchObject({ isCardio: 1, restSeconds: 0, muscleGroup: 'full_body' });
+    expect(byName('Treadmill')).toMatchObject({ isCardio: 1, restSeconds: 0, muscleGroup: 'cardio' });
     expect(byName('Dip').gripSet).toBeNull();
     expect(byName('Triceps Pushdown').gripSet).toBe('triceps');
   });
@@ -134,6 +134,10 @@ describe('exercise library', () => {
     expect(dup.json.message).toMatch(/already exists/);
     // another account may use the same name
     expect((await call('POST', '/api/exercises', bob, { name: 'Sled Push', muscleGroup: 'legs', equipment: 'other', image: null, gripSet: null })).status).toBe(201);
+
+    // the Cardio category makes an exercise time-based, without a rest timer or grips
+    const bike = await call('POST', '/api/exercises', ann, { name: 'Bike', muscleGroup: 'cardio', equipment: 'machine', image: null, gripSet: 'back' });
+    expect(bike.json).toMatchObject({ isCardio: 1, restSeconds: 0, restCustom: 1, gripSet: null, muscleGroup: 'cardio' });
 
     expect((await call('DELETE', `/api/exercises/${made.json.id}`, ann)).json).toEqual({ result: 'deleted' });
     // seeded exercises are archived, never deleted
