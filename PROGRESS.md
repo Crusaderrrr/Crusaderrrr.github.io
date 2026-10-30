@@ -121,7 +121,7 @@ Live URL: https://crusaderrrr.github.io/
 - [x] E2E in Chrome (390×844): go offline → fill set + mark done → banner shows, copy in localStorage → back online → synced, banner and copy gone; a stale pending copy is saved on reload
 - Not covered: adding/replacing an exercise offline (needs the exercise list + "Previous" from the server); a 4xx refusal drops the local copy
 
-### Phase 11 — Import a v1 backup ✅ (UI not yet clicked through in a browser)
+### Phase 11 — Import a v1 backup ✅ (removed again 2026-10-30, see Feedback round 7)
 - [x] `POST /api/import` (`server/routes/import.ts`, 20 MB body limit for this route only): one transaction; settings, exercises (matched by name to the account's library, custom ones created), workouts, plan, skips. Ids derive from (account, v1 id), so importing the same file again replaces instead of duplicating. The backup's unfinished workout is left out if the account already has one in progress. Tests in `import.test.ts`
 - [x] `src/db/v1reader.worker.ts` reads the `.sqlite3` in memory with sqlite-wasm (no migration, so any v1 schema version 1–7 works) and builds the JSON; Settings → Data → **Import a v1 backup**
 - [x] Checked with the real backup (`ttp-2026-10-25.sqlite3`, v7): reader output posted to a real server twice → 1 workout, plan Mon–Fri, skip 22 Oct, default rest 180 s, 3 favourites, no duplicates
@@ -131,6 +131,16 @@ Live URL: https://crusaderrrr.github.io/
 - [x] `DEPLOY.md`: lid/updates/ufw, Docker Engine on Mint, `.env`, compose up, first invite, Tailscale Funnel, v1 data move, nightly `pg_dump` timer (keep 14) + restore, updates, troubleshooting
 - [ ] Run it on the laptop (owner); not tested by me
 - Skipped on purpose: turning the old GitHub Pages site into a "moved to …" page
+
+## Feedback round 7 (2026-10-30) ✅
+- [x] Prefilled sets (from the last workout) are independent: editing one no longer changes the later ones ("Add set" copies still follow)
+- [x] Week tonnage axis and tooltip show the range ("26 Oct – 1 Nov")
+- [x] Cardio is a category (filter chip, New exercise); creating one makes it time-based. Migration 005 moves Treadmill into it
+- [x] Finishing lifts the workout's duration to its logged cardio time (`finishedAtFor`)
+- [x] Optional check-in on the Save sheet (Good / Okay / Bad + reasons) and a mood on skipped days (migration 006)
+- [x] Calendar: tick for done, amber bar for skipped, mood dot on top. Today's week strip still uses the old fills
+- [x] "Import a v1 backup" removed (button, worker, `POST /api/import`, DEPLOY step). `src/db/` is now unused
+- Checked in Chrome (390×844): calendar marks, Cardio filter, check-in chips. Not clicked through: the New exercise sheet with Cardio, the skip sheet's mood, a cardio finish
 
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
@@ -159,3 +169,5 @@ Live URL: https://crusaderrrr.github.io/
   2026-10-26 is now the only "time's up" signal. New sets added for a previously-logged exercise
   are now prefilled (count, weight, reps, set type) from that exercise's last workout instead of
   starting as one empty set.
+- 2026-10-30 — Feedback round 7: set-edit and week-label fixes, Cardio category, cardio-aware duration,
+  optional check-in + calendar marks, v1 import removed.

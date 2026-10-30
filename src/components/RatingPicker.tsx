@@ -8,10 +8,14 @@ export default function RatingPicker({ value, onChange }: { value: Rating | null
       {RATINGS.map((r) => (
         <button
           key={r}
-          className={`${btn.chip(r === value)} flex items-center gap-2`}
+          className={`${btn.chip(false)} flex items-center gap-2 ${r === value ? '!text-neutral-950' : ''}`}
+          style={r === value ? { background: RATING_COLOR[r] } : undefined}
           onClick={() => onChange(r === value ? null : r)}
         >
-          <span className="h-2.5 w-2.5 rounded-full" style={{ background: RATING_COLOR[r] }} />
+          <span
+            className="h-2.5 w-2.5 rounded-full"
+            style={{ background: r === value ? '#0a0a0a' : RATING_COLOR[r] }}
+          />
           {RATING_NAMES[r]}
         </button>
       ))}
