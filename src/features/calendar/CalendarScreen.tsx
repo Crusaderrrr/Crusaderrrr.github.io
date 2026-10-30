@@ -32,14 +32,33 @@ export const STATUS_NAME: Record<DayStatus, string> = {
 
 const LEGEND: DayStatus[] = ['done', 'extra', 'planned', 'skipped', 'missed'];
 
-/** Done days get a tick and skipped days a bar instead of a fill; the others keep their fill. */
+/** Done and skipped days get a soft tint and a corner badge; the other statuses keep their fill. */
 const isMarked = (s: DayStatus) => s === 'done' || s === 'extra' || s === 'skipped';
+const MARKED_CELL: Partial<Record<DayStatus, string>> = {
+  done: 'bg-green-500/10 ring-1 ring-inset ring-green-500/30',
+  extra: 'bg-green-500/10 ring-1 ring-inset ring-green-500/30',
+  skipped: 'bg-amber-500/10 ring-1 ring-inset ring-amber-500/30',
+};
 
-/** Legend / day-sheet marker: a small tick or bar for marked statuses, the usual dot otherwise. */
-function StatusMark({ status }: { status: DayStatus }) {
-  if (status === 'skipped') return <span className="h-1.5 w-3 shrink-0 rounded-sm bg-amber-500" />;
+/** Tick (done), outlined tick (done, unplanned) or dash (skipped) in a small circle; dots for the rest. */
+function StatusMark({ status, size = 'h-4 w-4' }: { status: DayStatus; size?: string }) {
+  if (status === 'skipped') {
+    return (
+      <span className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-amber-500`}>
+        <span className="h-0.5 w-1/2 rounded-full bg-neutral-950" />
+      </span>
+    );
+  }
   if (status === 'done' || status === 'extra') {
-    return <Icon name="check" className={`h-4 w-4 text-green-500 ${status === 'extra' ? 'opacity-60' : ''}`} />;
+    return (
+      <span
+        className={`flex ${size} shrink-0 items-center justify-center rounded-full ${
+          status === 'done' ? 'bg-green-500 text-neutral-950' : 'text-green-500 ring-[1.5px] ring-inset ring-green-500'
+        }`}
+      >
+        <Icon name="check" className="h-full w-full p-px" />
+      </span>
+    );
   }
   return <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATUS_STYLE[status]}`} />;
 }
@@ -104,32 +123,26 @@ export default function CalendarScreen() {
           ))}
           {cells.map((date, i) => {
             const d = date ? byDate.get(date) : undefined;
-            const marked = d && isMarked(d.status);
             return date ? (
               <button
                 key={date}
-                className={`relative aspect-square overflow-hidden rounded-xl text-sm font-medium ${
-                  marked ? 'ring-2 ring-inset ring-neutral-700' : d ? STATUS_STYLE[d.status] : ''
+                className={`relative aspect-square rounded-xl text-sm font-medium ${
+                  d ? (isMarked(d.status) ? MARKED_CELL[d.status] : STATUS_STYLE[d.status]) : ''
                 } ${date === t ? 'font-bold outline-2 outline-offset-1 outline-white' : ''}`}
                 onClick={() => setOpen(date)}
               >
-                {d?.status === 'skipped' && <span className="absolute inset-x-0 top-[38%] h-[22%] bg-amber-500" />}
-                {(d?.status === 'done' || d?.status === 'extra') && (
-                  <Icon
-                    name="check"
-                    className={`absolute inset-0 h-full w-full text-green-500 ${d.status === 'extra' ? 'opacity-60' : ''}`}
-                  />
-                )}
                 {d?.mood && (
                   <span
                     className="absolute left-1/2 top-1 h-2 w-2 -translate-x-1/2 rounded-full"
                     style={{ background: RATING_COLOR[d.mood] }}
                   />
                 )}
-                {/* Marked days keep the number small in the corner, clear of the tick and bar. */}
-                <span className={marked ? 'absolute bottom-0.5 left-1.5 text-[10px] text-neutral-300' : ''}>
-                  {Number(date.slice(8))}
-                </span>
+                {Number(date.slice(8))}
+                {d && isMarked(d.status) && (
+                  <span className="absolute bottom-1 right-1">
+                    <StatusMark status={d.status} size="h-3.5 w-3.5" />
+                  </span>
+                )}
               </button>
             ) : (
               <span key={`pad${i}`} />
