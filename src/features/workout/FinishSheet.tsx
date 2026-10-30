@@ -4,7 +4,7 @@ import Sheet from '../../components/Sheet';
 import { btn, card, input, Stat } from '../../components/ui';
 import { prCountByWorkout } from '../../domain/progress';
 import { completeValues, formatWeight } from '../../domain/sets';
-import { formatDuration, summarize } from '../../domain/workout';
+import { finishedAtFor, formatDuration, summarize } from '../../domain/workout';
 import { useDbQuery, useNow } from '../../hooks/useDbQuery';
 import { sessionsByExercise } from '../../repositories/progress';
 import { finalizeWorkout, type WorkoutDetail } from '../../repositories/workouts';
@@ -79,7 +79,8 @@ export default function FinishSheet({
   }
 
   const summary = summarize(allSets);
-  const duration = (now - Date.parse(workout.startedAt)) / 1000;
+  const finishedAt = finishedAtFor(workout, now);
+  const duration = (Date.parse(finishedAt) - Date.parse(workout.startedAt)) / 1000;
 
   return (
     <Sheet title="Save workout" onClose={onClose}>
@@ -104,7 +105,7 @@ export default function FinishSheet({
             await finalizeWorkout(workout.id, [], {
               title: title.trim() || workout.title,
               notes,
-              finishedAt: new Date().toISOString(),
+              finishedAt: finishedAtFor(workout, Date.now()),
             });
             onFinished();
           }}

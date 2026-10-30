@@ -43,3 +43,19 @@ export function summarize(sets: SummarySet[]): { sets: number; volume: number } 
   }
   return { sets: count, volume };
 }
+
+/**
+ * Finish time of a workout ended at `now` (ms): never earlier than its start plus the logged
+ * cardio time (a 30 min treadmill session makes the workout at least 30 min). Cardio stores its
+ * duration in `reps`, in seconds; timed exercises can't overlap, so their total is the minimum.
+ */
+export function finishedAtFor(
+  w: { startedAt: string; exercises: { isCardio: number; sets: { completed: number; reps: number | null }[] }[] },
+  now: number,
+): string {
+  const cardioSeconds = w.exercises
+    .filter((e) => e.isCardio)
+    .flatMap((e) => e.sets)
+    .reduce((sum, s) => sum + (s.completed ? (s.reps ?? 0) : 0), 0);
+  return new Date(Math.max(now, Date.parse(w.startedAt) + cardioSeconds * 1000)).toISOString();
+}

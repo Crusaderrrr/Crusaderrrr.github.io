@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultTitle, formatClock, formatDuration, formatRest, summarize } from './workout';
+import { defaultTitle, finishedAtFor, formatClock, formatDuration, formatRest, summarize } from './workout';
 
 describe('workout', () => {
   it('names workouts by time of day', () => {
@@ -28,5 +28,28 @@ describe('workout', () => {
         { weightKg: 40, reps: 12, setType: 'drop', completed: 1 },
       ]),
     ).toEqual({ sets: 3, volume: 960 });
+  });
+});
+
+describe('finishedAtFor', () => {
+  const startedAt = '2026-10-30T10:00:00.000Z';
+  const start = Date.parse(startedAt);
+  const treadmill = { isCardio: 1, sets: [{ completed: 1, reps: 1800 }] };
+  const bench = { isCardio: 0, sets: [{ completed: 1, reps: 8 }] };
+
+  it('lifts a short workout to the logged cardio time', () => {
+    const now = start + 10 * 60_000;
+    expect(finishedAtFor({ startedAt, exercises: [bench, treadmill] }, now)).toBe(new Date(start + 30 * 60_000).toISOString());
+  });
+
+  it('keeps the real end when the workout was longer', () => {
+    const now = start + 60 * 60_000;
+    expect(finishedAtFor({ startedAt, exercises: [treadmill] }, now)).toBe(new Date(now).toISOString());
+  });
+
+  it('ignores strength reps and incomplete cardio sets', () => {
+    const now = start + 5 * 60_000;
+    const unfinished = { isCardio: 1, sets: [{ completed: 0, reps: 1800 }] };
+    expect(finishedAtFor({ startedAt, exercises: [bench, unfinished] }, now)).toBe(new Date(now).toISOString());
   });
 });
