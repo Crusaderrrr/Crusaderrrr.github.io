@@ -18,13 +18,20 @@ export default function TabBar() {
           to={t.to}
           end={t.to === '/'}
           className={({ isActive }) =>
-            `flex flex-1 flex-col items-center gap-0.5 rounded-full py-1.5 text-[11px] font-medium transition-colors ${
+            `flex flex-1 flex-col items-center gap-0.5 rounded-full py-1.5 text-[11px] font-medium transition duration-200 active:scale-90 ${
               isActive ? 'bg-green-500/15 text-green-500' : 'text-neutral-500 active:bg-white/5'
             }`
           }
         >
-          <Icon name={t.icon} className="h-6 w-6" />
-          {t.label}
+          {({ isActive }) => (
+            <>
+              <Icon
+                name={t.icon}
+                className={`h-6 w-6 transition-transform duration-200 ${isActive ? '-translate-y-px scale-110' : ''}`}
+              />
+              {t.label}
+            </>
+          )}
         </NavLink>
       ))}
     </nav>

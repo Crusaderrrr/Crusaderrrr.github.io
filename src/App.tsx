@@ -41,7 +41,7 @@ export default function App() {
       </main>
       {!fullScreen && (
         // Floats over the content (which has room to scroll past it); only the bars take touches.
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex flex-col gap-2 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex flex-col gap-2 px-3 pb-[max(0.5rem,calc(env(safe-area-inset-bottom)-0.5rem))]">
           <ActiveWorkoutBar />
           <TabBar />
         </div>
