@@ -33,6 +33,14 @@ const item = (n: number, exercise: ExerciseInfo, grip: 'normal' | null = null) =
   grip,
   previous: [],
 });
+it('sets prefilled from the last workout are independent of each other', () => {
+  const previous = [60, 70, 80].map((weightKg) => ({ weightKg, reps: 8 }));
+  let w = addExercises(base(), [{ ...item(1, bench), setIds: ['a', 'b', 'c'], previous }]);
+  w = updateSetValue(w, 'a', 'weight_kg', 65);
+  w = updateSetValue(w, 'a', 'reps', 10);
+  expect(w.exercises[0]!.sets.map((s) => [s.weightKg, s.reps])).toEqual([[65, 10], [70, 8], [80, 8]]);
+});
+
 /** Bench with three sets: ids s1-0, s1-1, s1-2. */
 function threeSets(): WorkoutDetail {
   let w = addExercises(base(), [item(1, bench)]);

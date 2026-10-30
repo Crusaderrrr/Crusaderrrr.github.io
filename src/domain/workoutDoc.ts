@@ -106,7 +106,8 @@ const mapExercise = (w: WorkoutDetail, weId: string, fn: (e: WorkoutExercise) =>
 /**
  * Adds exercises to the end. An exercise never logged before starts with one empty set (like
  * Hevy); one logged before starts with the same number of sets as last time, prefilled with
- * that set's weight/reps/type (counted as auto-filled, like a copied-forward "Add set").
+ * that set's weight/reps/type. Those values are not auto-filled, so editing one set never changes
+ * the others.
  */
 export function addExercises(
   w: WorkoutDetail,
@@ -135,7 +136,6 @@ export function addExercises(
             reps: p.reps,
             speedKmh: p.speedKmh ?? null,
             inclinePct: p.inclinePct ?? null,
-            autoFill: AUTO_WEIGHT | AUTO_REPS,
           }))
         : [emptySet(setIds[0]!, 0)],
       previous,
