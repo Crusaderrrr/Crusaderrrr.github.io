@@ -24,7 +24,7 @@ export default function App() {
     <div className={`flex h-full flex-col ${fullScreen ? '' : 'pt-[env(safe-area-inset-top)]'}`}>
       <SyncBanner />
       {/* Logging screens manage their own scrolling (fixed header + scrolling body). */}
-      <main className={fullScreen ? 'min-h-0 flex-1' : 'scroll-area min-h-0 flex-1 px-4 pt-3 pb-6'}>
+      <main className={fullScreen ? 'min-h-0 flex-1' : 'scroll-area min-h-0 flex-1 px-4 pt-3 pb-36'}>
         <Routes>
           <Route path="/" element={<TodayScreen />} />
           <Route path="/workout" element={<ActiveWorkoutScreen />} />
@@ -40,10 +40,11 @@ export default function App() {
         </Routes>
       </main>
       {!fullScreen && (
-        <>
+        // Floats over the content (which has room to scroll past it); only the bars take touches.
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex flex-col gap-2 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <ActiveWorkoutBar />
           <TabBar />
-        </>
+        </div>
       )}
     </div>
   );
@@ -59,7 +60,7 @@ function SyncBanner() {
   );
 }
 
-/** Mini-bar above the tabs while a workout is in progress. */
+/** Mini-bar above the tab pill while a workout is in progress. */
 function ActiveWorkoutBar() {
   const active = useDbQuery(getActiveWorkout, []);
   const now = useNow();
@@ -67,7 +68,7 @@ function ActiveWorkoutBar() {
   return (
     <Link
       to="/workout"
-      className="mx-3 mb-2 flex shrink-0 items-center gap-3 rounded-2xl bg-green-500 px-4 py-2.5 text-neutral-950 shadow-lg shadow-black/40"
+      className="pointer-events-auto mx-auto flex w-full max-w-md items-center gap-3 rounded-2xl bg-green-500 px-4 py-2.5 text-neutral-950 shadow-lg shadow-black/40"
     >
       <Icon name="dumbbell" className="h-5 w-5" />
       <span className="min-w-0 flex-1">

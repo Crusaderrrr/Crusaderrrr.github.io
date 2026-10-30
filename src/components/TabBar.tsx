@@ -11,15 +11,15 @@ const tabs: { to: string; label: string; icon: IconName }[] = [
 
 export default function TabBar() {
   return (
-    <nav className="grid shrink-0 grid-cols-5 border-t border-white/[0.06] bg-neutral-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+    <nav className="pointer-events-auto mx-auto flex w-full max-w-md gap-1 rounded-full bg-neutral-900/90 p-1.5 shadow-2xl shadow-black/60 ring-1 ring-white/10 backdrop-blur-xl">
       {tabs.map((t) => (
         <NavLink
           key={t.to}
           to={t.to}
           end={t.to === '/'}
           className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 pt-2 pb-1.5 text-[11px] font-medium ${
-              isActive ? 'text-green-500' : 'text-neutral-500'
+            `flex flex-1 flex-col items-center gap-0.5 rounded-full py-1.5 text-[11px] font-medium transition-colors ${
+              isActive ? 'bg-green-500/15 text-green-500' : 'text-neutral-500 active:bg-white/5'
             }`
           }
         >
