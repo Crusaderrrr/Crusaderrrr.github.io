@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { Sql } from '../db.js';
+import type { Push } from '../push.js';
 import { previousSets, type SetValuesJson } from '../previous.js';
 import { DATE_RE, FEELINGS, GRIPS, isUniqueViolation, iso, parseBody, privateRouter, RATINGS, SET_TYPES, userId } from './util.js';
 
@@ -212,7 +213,7 @@ async function saveWorkout(sql: Sql, uid: number, w: WorkoutBody): Promise<'ok' 
 
 const idParam = z.uuid();
 
-export function workoutRoutes(sql: Sql) {
+export function workoutRoutes(sql: Sql, push: Push) {
   const app = privateRouter(sql);
 
   /** Finished workouts in a date range (for the calendar), with their per-exercise notes. */
@@ -259,6 +260,8 @@ export function workoutRoutes(sql: Sql) {
       const result = await saveWorkout(sql, userId(c), data);
       if (result === 'foreign') return c.json({ error: 'not_found' }, 404);
       if (result === 'unknown_exercise') return c.json({ error: 'invalid_input', message: 'Unknown exercise.' }, 400);
+      // "Time's up" push at the end of the rest; a finished workout or a cleared rest cancels it.
+      push.schedule(data.id, data.finishedAt || !data.restEndsAt ? null : new Date(data.restEndsAt));
       return c.json({ ok: true });
     } catch (e) {
       if (isUniqueViolation(e, 'workout_one_active_idx')) {
@@ -271,7 +274,10 @@ export function workoutRoutes(sql: Sql) {
 
   app.delete('/:id', async (c) => {
     const id = idParam.safeParse(c.req.param('id'));
-    if (id.success) await sql`DELETE FROM workout WHERE id = ${id.data} AND user_id = ${userId(c)}`;
+    if (id.success) {
+      await sql`DELETE FROM workout WHERE id = ${id.data} AND user_id = ${userId(c)}`;
+      push.schedule(id.data, null);
+    }
     return c.json({ ok: true });
   });
 

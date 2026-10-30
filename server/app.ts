@@ -8,10 +8,12 @@ import type { Sql } from './db.js';
 import { authRoutes } from './routes/auth.js';
 import { exerciseRoutes } from './routes/exercises.js';
 import { inviteRoutes } from './routes/invites.js';
+import { pushRoutes } from './routes/push.js';
+import { createPush, type Push } from './push.js';
 import { planRoutes, settingsRoutes, skipRoutes } from './routes/planning.js';
 import { historyRoutes, progressRoutes, workoutRoutes } from './routes/workouts.js';
 
-export function createApp(sql: Sql, staticDir: string): Hono<AuthEnv> {
+export function createApp(sql: Sql, staticDir: string, push: Push = createPush(sql)): Hono<AuthEnv> {
   const app = new Hono<AuthEnv>();
   app.use(
     secureHeaders({
@@ -59,7 +61,8 @@ export function createApp(sql: Sql, staticDir: string): Hono<AuthEnv> {
   app.route('/api/settings', settingsRoutes(sql));
   app.route('/api/plan', planRoutes(sql));
   app.route('/api/skips', skipRoutes(sql));
-  app.route('/api/workouts', workoutRoutes(sql));
+  app.route('/api/workouts', workoutRoutes(sql, push));
+  app.route('/api/push', pushRoutes(sql, push));
   app.route('/api/history', historyRoutes(sql));
   app.route('/api/progress', progressRoutes(sql));
   app.all('/api/*', (c) => c.json({ error: 'not_found' }, 404));

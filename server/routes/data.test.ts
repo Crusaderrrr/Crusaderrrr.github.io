@@ -432,3 +432,24 @@ describe('history, calendar and progress', () => {
     await call('DELETE', `/api/workouts/${live.id}`, bob);
   });
 });
+
+describe('push subscriptions', () => {
+  const keys = { p256dh: 'BKey', auth: 'secret' };
+
+  it('hands out the public key and stores a device for the signed-in account', async () => {
+    const key = (await call('GET', '/api/push/key', ann)).json.publicKey;
+    expect(key).toMatch(/^[\w-]{40,}$/);
+    expect((await call('POST', '/api/push/subscribe', ann, { endpoint: 'https://web.push.apple.com/a1', keys })).status).toBe(200);
+    // the same device signing in as someone else moves to that account
+    expect((await call('POST', '/api/push/subscribe', bob, { endpoint: 'https://web.push.apple.com/a1', keys })).status).toBe(200);
+    const rows = await sql`SELECT user_id FROM push_subscription`;
+    expect(rows).toHaveLength(1);
+  });
+
+  it('refuses endpoints that are not browser push services (the server would call them)', async () => {
+    for (const endpoint of ['http://169.254.169.254/latest', 'https://example.com/x', 'https://web.push.apple.com.evil.example/x']) {
+      expect((await call('POST', '/api/push/subscribe', ann, { endpoint, keys })).status).toBe(400);
+    }
+    expect((await call('GET', '/api/push/key', '')).status).toBe(401);
+  });
+});
